@@ -35,10 +35,13 @@ void Processing_Start(void)
 
 static void Buffer_Put(int16_t sample)
 {
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-  //delayed_output = Reverb_Do(sample);
-  delayed_output = Reverb_Do(Compressor_Do(sample));
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
+  if (test_enabled) {
+    delayed_output = Reverb_Do(sample);
+  } else {
+    delayed_output = Reverb_Do(Compressor_Do(sample));
+  }
+  HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 }
 
 

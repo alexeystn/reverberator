@@ -32,7 +32,7 @@ void Compressor_Init(void)
   threshold = 3000.0f; ////0.1f * 2147483648;
 
   //compression ratio: 6:1 -> -6dB = 0.5
-  gainreduce = 0.5f;
+  gainreduce = 0.2f;
 
   gain_step_attack = (1.0f - gainreduce) / Attack;
   gain_step_release = (1.0f - gainreduce) / Release;
@@ -111,9 +111,9 @@ float Compressor_Do(float inSample)
   }
 
   if (State == S_NoOperation) {
-    //HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
   } else {
-    //HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
   }
 
   float outSampleF = inSample*gain;
