@@ -1,24 +1,85 @@
 #include "main.h"
 #include "defines.h"
-#include "generator.h"
-#include "filters.h"
-
-extern I2S_HandleTypeDef hi2s1;
-extern I2S_HandleTypeDef hi2s3;
+#include "reverb.h"
+#include <stdlib.h>
+#include <string.h>
 
 
-int16_t data_output[4];
-int16_t data_input[4];
-int16_t delayed_output = 0;
-uint32_t pointer = 0;
-uint8_t test_enabled = 0;
+typedef enum {
+  F_COMB,
+  F_ALLPASS
+} filter_type_t;
+
+
+typedef struct {
+  filter_type_t type;
+  float *buffer;
+  uint32_t length;
+  uint32_t pointer;
+  float gain;
+} filter_t;
+
+#define F_COMB_COUNT        4
+#define  F_ALLPASS_COUNT    3
+
+
+void Filter_Init(filter_t *filter, filter_type_t type, float gain, float delay_ms);
+float Filter_Process(filter_t *filter, float sample);
+
+void Filter_Init(filter_t *filter, filter_type_t type, float gain, float delay_ms)
+{
+  filter->type = type;
+  filter->pointer = 0;
+  filter->gain = gain;
+  filter->length = (int)(SAMPLING_FREQUENCY * delay_ms / 1000.0f);
+  filter->buffer = (float *)malloc(  sizeof(float) * filter->length);
+  if (filter->buffer == NULL) {
+    while (1) {
+      HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+      HAL_Delay(100);
+    }
+  } else {
+    memset(filter->buffer, 0, sizeof(float) * filter->length);
+  }
+}
+
+
+float Filter_Process(filter_t *filter, float sample)
+{
+  float new;
+  float readback = filter->buffer[filter->pointer];
+  if (filter->type == F_COMB) {
+    new = readback * filter->gain + sample;
+  } else {
+    readback += (-filter->gain) * sample;
+    new = readback*filter->gain + sample;
+  }
+  filter->buffer[filter->pointer] = new;
+  filter->pointer++;
+  if (filter->pointer == filter->length) {
+    filter->pointer = 0;
+  }
+  return readback;
+}
 
 
 filter_t Filters_Comb[F_COMB_COUNT];
 filter_t Filters_AllPass[F_ALLPASS_COUNT];
 
 
-float Reverb_Process(float sample)
+void Reverb_Init(void)
+{
+  Filter_Init(&Filters_Comb[0], F_COMB, 0.805, 36.04);
+  Filter_Init(&Filters_Comb[1], F_COMB, 0.827, 31.12);
+  Filter_Init(&Filters_Comb[2], F_COMB, 0.783, 40.44);
+  Filter_Init(&Filters_Comb[3], F_COMB, 0.764, 44.92);
+  Filter_Init(&Filters_AllPass[0], F_ALLPASS, 0.7, 5.00);
+  Filter_Init(&Filters_AllPass[1], F_ALLPASS, 0.7, 1.68);
+  Filter_Init(&Filters_AllPass[2], F_ALLPASS, 0.7, 0.48);
+}
+
+
+float Reverb_Do(float sample)
 {
   float newSample = 0;
   uint8_t i;
@@ -31,76 +92,4 @@ float Reverb_Process(float sample)
     newSample = Filter_Process(&Filters_AllPass[i], newSample);
   }
   return newSample;
-}
-
-
-void Reverb_Start(void)
-{
-  Filter_Init(&Filters_Comb[0], F_COMB, 0.805, 36.04);
-  Filter_Init(&Filters_Comb[1], F_COMB, 0.827, 31.12);
-  Filter_Init(&Filters_Comb[2], F_COMB, 0.783, 40.44);
-  Filter_Init(&Filters_Comb[3], F_COMB, 0.764, 44.92);
-  Filter_Init(&Filters_AllPass[0], F_ALLPASS, 0.7, 5.00);
-  Filter_Init(&Filters_AllPass[1], F_ALLPASS, 0.7, 1.68);
-  Filter_Init(&Filters_AllPass[2], F_ALLPASS, 0.7, 0.48);
-
-  if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == 0) {
-    test_enabled = 1;
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); // LED ON
-  } else {
-    test_enabled = 0;
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET); // LED OFF
-  }
-  HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)data_output, 4);
-  HAL_I2S_Receive_DMA(&hi2s3, (uint16_t*)data_input, 4);
-}
-
-
-static void Buffer_Put(int16_t sample)
-{
-  delayed_output = Reverb_Process(sample);
-}
-
-
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-  Generator_Step();
-  if (test_enabled) {
-    data_output[0] = Generator_GetValue(); // Right OUT
-  } else {
-    data_output[0] = 0; // Right OUT
-  }
-  data_output[1] = delayed_output; // Left OUT
-}
-
-
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-  Generator_Step();
-  if (test_enabled) {
-    data_output[2] = Generator_GetValue(); // Right OUT
-  } else {
-    data_output[2] = 0; // Right OUT
-  }
-  data_output[3] = delayed_output; // Left OUT
-}
-
-
-void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-  if (test_enabled) {
-    Buffer_Put(data_input[0]); // Left IN
-  } else {
-    Buffer_Put(data_input[1]); // Right IN
-  }
-}
-
-
-void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-  if (test_enabled) {
-    Buffer_Put(data_input[2]); // Left IN
-  } else {
-    Buffer_Put(data_input[3]); // Left IN
-  }
 }

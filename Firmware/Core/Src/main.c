@@ -17,12 +17,12 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include "processing.h"
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "reverb.h"
 
 /* USER CODE END Includes */
 
@@ -102,7 +102,7 @@ int main(void)
   MX_I2S3_Init();
   /* USER CODE BEGIN 2 */
 
-  Reverb_Start();
+  Processing_Start();
 
   /* USER CODE END 2 */
 

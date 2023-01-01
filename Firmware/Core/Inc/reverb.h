@@ -1,8 +1,7 @@
 #ifndef REVERB_H
 #define REVERB_H
 
-#include "main.h"
-
-void Reverb_Start(void);
+void Reverb_Init(void);
+float Reverb_Do(float sample);
 
 #endif
