@@ -1,16 +1,18 @@
 #include "main.h"
+#include "defines.h"
+#include "generator.h"
 
 extern I2S_HandleTypeDef hi2s1;
 extern I2S_HandleTypeDef hi2s3;
 
 
-#define DELAY_LENGTH 10000
+#define BUFFER_SIZE ((SAMPLING_FREQUENCY * (DELAY_TIME_MS -1)) / 1000)  // Why -1 ?
 
-static int16_t buffer[DELAY_LENGTH];
-static int16_t data_output[4];
-static int16_t data_input[4];
-static int16_t delayed_output = 0;
-static uint32_t pointer = 0;
+int16_t buffer[BUFFER_SIZE];
+int16_t data_output[4];
+int16_t data_input[4];
+int16_t delayed_output = 0;
+uint32_t pointer = 0;
 
 
 void Reverb_Start(void)
@@ -20,38 +22,40 @@ void Reverb_Start(void)
 }
 
 
-static void BufferPut(int16_t sample)
+static void Buffer_Put(int16_t sample)
 {
-  if (pointer >= DELAY_LENGTH) {
+  if (pointer >= BUFFER_SIZE) {
     pointer = 0;
   }
   delayed_output = buffer[pointer];
-  buffer[pointer] = buffer[pointer] * 3 / 4 + sample;
+  buffer[pointer] = sample;// buffer[pointer] * 3 / 4 + sample;
   pointer++;
 }
 
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  data_output[0] = delayed_output;
-  data_output[1] = delayed_output;
+  Generator_Step();
+  data_output[0] = Generator_GetValue(); // Right OUT
+  data_output[1] = delayed_output; // Left OUT
 }
 
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  data_output[2] = delayed_output;
-  data_output[3] = delayed_output;
+  Generator_Step();
+  data_output[2] = Generator_GetValue(); // Right OUT
+  data_output[3] = delayed_output; // Left OUT
 }
 
 
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  BufferPut(data_input[0]);
+  Buffer_Put(data_input[0]); // Left IN
 }
 
 
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  BufferPut(data_input[2]);
+  Buffer_Put(data_input[2]); // Left IN
 }
