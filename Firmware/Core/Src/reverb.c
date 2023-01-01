@@ -1,14 +1,12 @@
 #include "main.h"
 #include "defines.h"
 #include "generator.h"
+#include "filters.h"
 
 extern I2S_HandleTypeDef hi2s1;
 extern I2S_HandleTypeDef hi2s3;
 
 
-#define BUFFER_SIZE ((SAMPLING_FREQUENCY * (DELAY_TIME_MS -1)) / 1000)  // Why -1 ?
-
-int16_t buffer[BUFFER_SIZE];
 int16_t data_output[4];
 int16_t data_input[4];
 int16_t delayed_output = 0;
@@ -16,8 +14,36 @@ uint32_t pointer = 0;
 uint8_t test_enabled = 0;
 
 
+filter_t Filters_Comb[F_COMB_COUNT];
+filter_t Filters_AllPass[F_ALLPASS_COUNT];
+
+
+float Reverb_Process(float sample)
+{
+  float newSample = 0;
+  uint8_t i;
+  for (i = 0; i < F_COMB_COUNT; i++) {
+    newSample += Filter_Process(&Filters_Comb[i], sample);
+  }
+  newSample /= 4.0f;
+
+  for (i = 0; i < F_ALLPASS_COUNT; i++) {
+    newSample = Filter_Process(&Filters_AllPass[i], newSample);
+  }
+  return newSample;
+}
+
+
 void Reverb_Start(void)
 {
+  Filter_Init(&Filters_Comb[0], F_COMB, 0.805, 36.04);
+  Filter_Init(&Filters_Comb[1], F_COMB, 0.827, 31.12);
+  Filter_Init(&Filters_Comb[2], F_COMB, 0.783, 40.44);
+  Filter_Init(&Filters_Comb[3], F_COMB, 0.764, 44.92);
+  Filter_Init(&Filters_AllPass[0], F_ALLPASS, 0.7, 5.00);
+  Filter_Init(&Filters_AllPass[1], F_ALLPASS, 0.7, 1.68);
+  Filter_Init(&Filters_AllPass[2], F_ALLPASS, 0.7, 0.48);
+
   if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == 0) {
     test_enabled = 1;
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); // LED ON
@@ -32,12 +58,7 @@ void Reverb_Start(void)
 
 static void Buffer_Put(int16_t sample)
 {
-  if (pointer >= BUFFER_SIZE) {
-    pointer = 0;
-  }
-  delayed_output = buffer[pointer];
-  buffer[pointer] = sample;// buffer[pointer] * 3 / 4 + sample;
-  pointer++;
+  delayed_output = Reverb_Process(sample);
 }
 
 
