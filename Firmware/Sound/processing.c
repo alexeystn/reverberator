@@ -39,7 +39,7 @@ static void Buffer_Put(int16_t sample)
   if (test_enabled) {
     sample_output = Reverb_Do(sample);
   } else {
-    sample_output = Reverb_Do(Compressor_Do(sample));
+    sample_output = sample + Reverb_Do(Compressor_Do(sample)) / 2;
   }
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 }
