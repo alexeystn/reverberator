@@ -3,6 +3,7 @@
 #include "reverb.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 
 typedef enum {
@@ -20,7 +21,7 @@ typedef struct {
 } filter_t;
 
 #define F_COMB_COUNT        4
-#define  F_ALLPASS_COUNT    3
+#define F_ALLPASS_COUNT    3
 
 
 void Filter_Init(filter_t *filter, filter_type_t type, float gain, float delay_ms);
@@ -76,6 +77,16 @@ void Reverb_Init(void)
   Filter_Init(&Filters_AllPass[0], F_ALLPASS, 0.7, 5.00);
   Filter_Init(&Filters_AllPass[1], F_ALLPASS, 0.7, 1.68);
   Filter_Init(&Filters_AllPass[2], F_ALLPASS, 0.7, 0.48);
+
+#if 1  // extend reverb time
+  uint8_t i;
+  for (i = 0; i < F_COMB_COUNT; i++) {
+    Filters_Comb[i].gain = sqrtf(Filters_Comb[i].gain);
+  }
+  for (i = 0; i < F_ALLPASS_COUNT; i++) {
+    Filters_AllPass[i].gain = sqrtf(Filters_AllPass[i].gain);
+  }
+#endif
 }
 
 

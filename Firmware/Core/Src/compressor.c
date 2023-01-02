@@ -1,122 +1,117 @@
 #include "main.h"
 #include "defines.h"
 #include "compressor.h"
-#include "math.h"
+#include <math.h>
 
 // https://github.com/YetAnotherElectronicsChannel/STM32_DSP_COMPRESSOR/
 
-
-// 0 = no gain reduction
-// 1 = attack
-// 2 = gain reduction
-// 3 = release
-enum CompStates {S_NoOperation, S_Attack, S_GainReduction, S_Release };
-enum CompStates State = S_NoOperation;
+#define COMPRESSOR_ATTACK_MS   30
+#define COMPRESSOR_RELEASE_MS  20
+#define COMPRESSOR_HOLD_MS     10
+#define COMPRESSOR_THRESHOLD   3000
+#define COMPRESSOR_RATIO       5
 
 
-int32_t Attack, Release, Hold, TimeOut;
-float gainreduce, gain_step_attack, gain_step_release, gain, threshold;
+enum comp_state_t {
+  C_IDLE,
+  C_ATTACK,
+  C_GAIN_REDUCE,
+  C_RELEASE };
+
+enum comp_state_t state = C_IDLE;
+
+
+int32_t attack, release, hold, timeout;
+float gain_reduce, gain_step_attack, gain_step_release, gain, threshold;
 
 
 void Compressor_Init(void)
 {
-  // 1 sample = 1/96kHz = ~10us
-  //Attack -> 30 ms -> 3000
-  //Release -> 20 ms -> 2000
-  //Hold -> 10ms -> 1000
-  Attack = 30 * SAMPLING_FREQUENCY / 1000.0f;
-  Release = 20 * SAMPLING_FREQUENCY / 1000.0f;
-  Hold = 10 * SAMPLING_FREQUENCY / 1000.0f;
+  attack = COMPRESSOR_ATTACK_MS * SAMPLING_FREQUENCY / 1000.0f;
+  release = COMPRESSOR_RELEASE_MS * SAMPLING_FREQUENCY / 1000.0f;
+  hold = COMPRESSOR_HOLD_MS * SAMPLING_FREQUENCY / 1000.0f;
 
-  //threshold -20dB below limit -> 0.1 * 2^31
-  threshold = 3000.0f; ////0.1f * 2147483648;
+  threshold = COMPRESSOR_THRESHOLD;
+  gain_reduce = 1.0f / COMPRESSOR_RATIO;
 
-  //compression ratio: 6:1 -> -6dB = 0.5
-  gainreduce = 0.2f;
-
-  gain_step_attack = (1.0f - gainreduce) / Attack;
-  gain_step_release = (1.0f - gainreduce) / Release;
+  gain_step_attack = (1.0f - gain_reduce) / attack;
+  gain_step_release = (1.0f - gain_reduce) / release;
 
   //initial gain = 1.0 -> no compression
   gain = 1.0f;
 }
 
 
-float Compressor_Do(float inSample)
+float Compressor_Do(float sample)
 {
-  float inSampleF = (float)inSample;
-
-  if (fabs(inSampleF) > threshold) {
-    if (gain >=  gainreduce) {
-      if (State==S_NoOperation) {
-        State=S_Attack;
-        TimeOut = Attack;
-      }
-      else if (State==S_Release) {
-        State=S_Attack;
-        TimeOut = Attack;
+  if (fabs(sample) > threshold) {
+    if (gain >=  gain_reduce) {
+      if (state == C_IDLE) {
+        state = C_ATTACK;
+        timeout = attack;
+      } else {
+        if (state == C_RELEASE) {
+          state = C_ATTACK;
+          timeout = attack;
+        }
       }
     }
-    if (State==S_GainReduction) TimeOut = Hold;
-
-  }
-
-  if (fabs(inSampleF) < threshold && gain <= 1.0f) {
-    if (TimeOut==0 && State==S_GainReduction) {
-      State=S_Release;
-      TimeOut = Release;
+    if (state == C_GAIN_REDUCE) {
+      timeout = hold;
     }
   }
-  switch (State) {
 
-    case S_Attack:
-      if (TimeOut>0 && gain > gainreduce) {
+  if ((fabs(sample) < threshold) && (gain <= 1.0f)) {
+    if ((timeout == 0) && (state == C_GAIN_REDUCE)) {
+      state = C_RELEASE;
+      timeout = release;
+    }
+  }
+
+  switch (state) {
+    case C_ATTACK:
+      if ((timeout > 0) && (gain > gain_reduce)) {
         gain -= gain_step_attack;
-        TimeOut--;
+        timeout--;
+      } else {
+        state = C_GAIN_REDUCE;
+        timeout = hold;
       }
-      else {
-        State=S_GainReduction;
-        TimeOut = Hold;
+      break;
+    case C_GAIN_REDUCE:
+      if (timeout > 0) {
+        timeout--;
+      } else {
+        state = C_RELEASE;
+        timeout = release;
       }
       break;
 
-
-    case S_GainReduction:
-      if (TimeOut>0) TimeOut--;
-      else {
-        State=S_Release;
-        TimeOut = Release;
-      }
-      break;
-
-
-    case S_Release:
-      if (TimeOut>0 && gain<1.0f) {
-        TimeOut--;
+    case C_RELEASE:
+      if (timeout>0 && gain<1.0f) {
+        timeout--;
         gain += gain_step_release;
-      }
-      else {
-        State=S_NoOperation;
+      } else {
+        state=C_IDLE;
       }
       break;
 
-    case S_NoOperation:
-      if (gain < 1.0f) gain = 1.0F;
+    case C_IDLE:
+      if (gain < 1.0f) {
+        gain = 1.0f;
+      }
       break;
 
     default:
-
       break;
 
   }
 
-  if (State == S_NoOperation) {
+  if (state == C_IDLE) {
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
   } else {
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
   }
 
-  float outSampleF = inSample*gain;
-
-  return (int) outSampleF;
+  return sample * gain;
 }

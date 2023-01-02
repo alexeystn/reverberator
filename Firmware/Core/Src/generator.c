@@ -2,6 +2,8 @@
 #include "defines.h"
 #include "math.h"
 
+#define GENERATOR_FREQUENCY_HZ    100
+#define GENERATOR_AMPLITUDE       15000
 #define TICKS_IN_PERIOD  (SAMPLING_FREQUENCY / GENERATOR_FREQUENCY_HZ)
 
 int16_t generator_output = 0;
