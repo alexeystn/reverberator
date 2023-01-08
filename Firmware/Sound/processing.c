@@ -7,11 +7,15 @@
 
 extern I2S_HandleTypeDef hi2s1;
 extern I2S_HandleTypeDef hi2s3;
+extern UART_HandleTypeDef huart1;
 
 
 int16_t buffer_output[4];
 int16_t buffer_input[4];
 int16_t sample_output = 0;
+int16_t debug_buffer[2][DEBUG_BUFFER_SIZE];
+int16_t debug_sample_pointer = 0;
+uint8_t debug_buffer_pointer = 0;
 
 uint8_t test_enabled = 0;
 
@@ -33,14 +37,33 @@ void Processing_Start(void)
 }
 
 
+static void Debug_Put(int16_t sample)
+{
+  debug_buffer[debug_buffer_pointer][debug_sample_pointer] = sample;
+  debug_sample_pointer++;
+  if (debug_sample_pointer == DEBUG_BUFFER_SIZE) {
+    HAL_UART_Abort(&huart1);
+    HAL_UART_Transmit_DMA(&huart1, (uint8_t*)&debug_buffer[debug_buffer_pointer][0], sizeof(debug_buffer[0]));
+    debug_sample_pointer = 0;
+    debug_buffer_pointer++;
+    if (debug_buffer_pointer == 2) {
+      debug_buffer_pointer = 0;
+    }
+  }
+
+}
+
+
 static void Buffer_Put(int16_t sample)
 {
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
+  Debug_Put(sample);
   if (test_enabled) {
     sample_output = Reverb_Do(sample);
   } else {
     sample_output = sample + Reverb_Do(Compressor_Do(sample)) / 2;
   }
+  Debug_Put(sample_output);
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 }
 

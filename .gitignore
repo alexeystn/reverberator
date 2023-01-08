@@ -1,2 +1,4 @@
 Firmware/Debug
 Firmware/.settings
+*.bin
+.mxproject
