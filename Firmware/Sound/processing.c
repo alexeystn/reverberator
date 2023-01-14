@@ -2,8 +2,8 @@
 #include "defines.h"
 #include "generator.h"
 #include "reverb.h"
+#include "filters.h"
 #include "compressor.h"
-
 
 extern I2S_HandleTypeDef hi2s1;
 extern I2S_HandleTypeDef hi2s3;
@@ -24,6 +24,7 @@ void Processing_Start(void)
 {
   Reverb_Init();
   Compressor_Init();
+  Filters_Init();
 
   if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == 0) {
     test_enabled = 1;
@@ -61,9 +62,10 @@ static void Buffer_Put(int16_t sample)
   if (test_enabled) {
     sample_output = Reverb_Do(sample);
   } else {
-    sample_output = sample + Reverb_Do(Compressor_Do(sample)) / 2;
+    //sample_output = sample + Reverb_Do(Compressor_Do(sample)) / 2;
+    sample_output = Reverb_Do(Compressor_Do(Filters_Do(sample)));
   }
-  Debug_Put(sample_output);
+  //Debug_Put(sample_output);
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 }
 
