@@ -22,8 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "processing.h"
-#include "ssd1306.h"
-#include "ssd1306_tests.h"
+#include "interface.h"
 
 /* USER CODE END Includes */
 
@@ -112,6 +111,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  Interface_Init();
   Processing_Start();
 
   /* USER CODE END 2 */
@@ -120,7 +120,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    //ssd1306_TestAll();
+    Interface_Loop();
 
     /* USER CODE END WHILE */
 

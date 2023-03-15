@@ -18,6 +18,30 @@ int16_t debug_sample_pointer = 0;
 uint8_t debug_buffer_pointer = 0;
 
 uint8_t test_enabled = 0;
+int16_t peak_level = 0;
+
+
+static void Peak_Level_Put(int16_t sample)
+{
+  if (sample > peak_level) {
+    peak_level = sample;
+  } else {
+    if (sample < -peak_level) {
+      peak_level = -sample;
+    }
+  }
+}
+
+
+int16_t Peak_Level_Get(void)
+{
+  int16_t ret;
+  __disable_irq();
+  ret = peak_level;
+  peak_level = 0;
+  __enable_irq();
+  return ret;
+}
 
 
 void Processing_Start(void)
@@ -51,7 +75,6 @@ static void Debug_Put(int16_t sample)
       debug_buffer_pointer = 0;
     }
   }
-
 }
 
 
@@ -59,6 +82,7 @@ static void Buffer_Put(int16_t sample)
 {
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
   Debug_Put(sample);
+  Peak_Level_Put(sample);
   if (test_enabled) {
     sample_output = Reverb_Do(sample);
   } else {
