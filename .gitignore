@@ -3,3 +3,5 @@ Firmware/.settings
 *.bin
 .mxproject
 *.wav
+*.so
+*.png
