@@ -5,7 +5,7 @@
 #include "filters.h"
 #include "compressor.h"
 
-extern I2S_HandleTypeDef hi2s1;
+extern I2S_HandleTypeDef hi2s2;
 extern I2S_HandleTypeDef hi2s3;
 extern UART_HandleTypeDef huart1;
 
@@ -57,7 +57,7 @@ void Processing_Start(void)
     test_enabled = 0;
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET); // LED OFF
   }
-  HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)buffer_output, 4);
+  HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)buffer_output, 4);
   HAL_I2S_Receive_DMA(&hi2s3, (uint16_t*)buffer_input, 4);
 }
 

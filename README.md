@@ -7,8 +7,8 @@
 | B3 (CK)   | BCK |     |
 | A15 (WS)  | LRC |     |
 | B10 (MCK) | SCK |     |
-| A4 (WS)   |     | LCK |
-| A5 (CK)   |     | BCK |
-| A7 (SD)   |     | DIN |
+| B12 (WS)  |     | LCK |
+| B13 (CK)  |     | BCK |
+| B15 (SD)  |     | DIN |
 | GND       |     | FMY-MD1-MD0 | 
 |  | 5V Analog <br> 3.3V Digital | 3.3V Analog <br> 1.8V/3.3V Digital |
