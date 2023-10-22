@@ -96,14 +96,14 @@ static void Buffer_Put(int16_t sample)
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  buffer_output[0] = 0; // Right OUT
+  buffer_output[0] = sample_output; // Right OUT
   buffer_output[1] = sample_output; // Left OUT
 }
 
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  buffer_output[2] = 0; // Right OUT
+  buffer_output[2] = sample_output; // Right OUT
   buffer_output[3] = sample_output; // Left OUT
 }
 
