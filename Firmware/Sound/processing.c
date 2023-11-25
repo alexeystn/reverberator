@@ -21,6 +21,18 @@ uint8_t test_enabled = 0;
 int16_t peak_level = 0;
 
 
+float reverbDry = 0;
+float reverbWet = 0;
+
+
+void Set_Dry_Wet(uint8_t dry10, uint8_t wet10) {
+  __disable_irq();
+  reverbDry = (float)(dry10*dry10*dry10) / 1000.0f;
+  reverbWet = (float)(wet10*wet10*wet10) / 1000.0f;
+  __enable_irq();
+}
+
+
 static void Peak_Level_Put(int16_t sample)
 {
   if (sample > peak_level) {
@@ -80,15 +92,19 @@ static void Debug_Put(int16_t sample)
 
 static void Buffer_Put(int16_t sample)
 {
+  static int32_t counter = 0;
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
   Debug_Put(sample);
   Peak_Level_Put(sample);
+  float fSample = Compressor_Do(sample);
+
   if (test_enabled) {
     sample_output = Reverb_Do(sample);
   } else {
-    sample_output = Compressor_Do(sample) / 2 + Reverb_Do(Compressor_Do(sample)) / 2;
+    sample_output = fSample * reverbDry + Reverb_Do(fSample) * reverbWet;
     //sample_output = sample + Reverb_Do(Compressor_Do(Filters_Do(sample)));
   }
+
   Debug_Put(sample_output);
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 }
@@ -110,11 +126,11 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  Buffer_Put(buffer_input[1]); // Right IN
+  Buffer_Put(buffer_input[0]); // Right IN
 }
 
 
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  Buffer_Put(buffer_input[3]); // Right IN
+  Buffer_Put(buffer_input[2]); // Right IN
 }
