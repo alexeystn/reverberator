@@ -1,6 +1,8 @@
 #include "main.h"
 #include "defines.h"
 #include "processing.h"
+#include "lcd.h"
+#include <stdio.h>
 
 
 #define PEAK_BUFFER_LEN  128
@@ -28,7 +30,7 @@ static uint8_t Logarithm(uint16_t value)
 
 void Interface_Init(void)
 {
-
+  LCD_Init();
 }
 
 void Interface_Loop(void)
@@ -45,6 +47,8 @@ void Interface_Loop(void)
 
   extern ADC_HandleTypeDef hadc1;
   char str[10];
-  sprintf(str, "=%d", HAL_ADC_GetValue(&hadc1));
+  sprintf(str, "=%4i", HAL_ADC_GetValue(&hadc1));
   HAL_ADC_Start(&hadc1);
+  LCD_SetCursor(0, 0);
+  LCD_Print(str);
 }
