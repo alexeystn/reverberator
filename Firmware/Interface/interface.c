@@ -1,11 +1,9 @@
 #include "main.h"
 #include "defines.h"
-#include "ssd1306.h"
-#include "ssd1306_tests.h"
 #include "processing.h"
 
 
-#define PEAK_BUFFER_LEN  SSD1306_WIDTH
+#define PEAK_BUFFER_LEN  128
 
 uint8_t peak_buffer[PEAK_BUFFER_LEN] = { 0, };
 uint8_t peak_buffer_pointer = 0;
@@ -30,7 +28,7 @@ static uint8_t Logarithm(uint16_t value)
 
 void Interface_Init(void)
 {
-  ssd1306_Init();
+
 }
 
 void Interface_Loop(void)
@@ -40,10 +38,13 @@ void Interface_Loop(void)
   if (peak_buffer_pointer == PEAK_BUFFER_LEN) {
     peak_buffer_pointer = 0;
   }
-  ssd1306_Fill(Black);
   for (int i = 0; i < PEAK_BUFFER_LEN; i++) {
     uint8_t x = peak_buffer[(peak_buffer_pointer + i) % PEAK_BUFFER_LEN];
-    ssd1306_Line(i, SSD1306_HEIGHT/2-x, i, SSD1306_HEIGHT/2+x, White);
   }
-  ssd1306_UpdateScreen();
+
+
+  extern ADC_HandleTypeDef hadc1;
+  char str[10];
+  sprintf(str, "=%d", HAL_ADC_GetValue(&hadc1));
+  HAL_ADC_Start(&hadc1);
 }

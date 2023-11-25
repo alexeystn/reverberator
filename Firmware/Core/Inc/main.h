@@ -63,7 +63,13 @@ void Error_Handler(void);
 #define KEY_GPIO_Port GPIOA
 #define KEYPAD_Pin GPIO_PIN_1
 #define KEYPAD_GPIO_Port GPIOA
-#define DEBUG_Pin GPIO_PIN_2
+#define P1_Pin GPIO_PIN_2
+#define P1_GPIO_Port GPIOA
+#define P2_Pin GPIO_PIN_3
+#define P2_GPIO_Port GPIOA
+#define P3_Pin GPIO_PIN_4
+#define P3_GPIO_Port GPIOA
+#define DEBUG_Pin GPIO_PIN_7
 #define DEBUG_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 

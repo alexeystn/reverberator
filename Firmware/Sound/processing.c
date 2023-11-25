@@ -86,8 +86,8 @@ static void Buffer_Put(int16_t sample)
   if (test_enabled) {
     sample_output = Reverb_Do(sample);
   } else {
-    //sample_output = sample + Reverb_Do(Compressor_Do(sample)) / 2;
-    sample_output = Reverb_Do(Compressor_Do(Filters_Do(sample)));
+    sample_output = Compressor_Do(sample) / 2 + Reverb_Do(Compressor_Do(sample)) / 2;
+    //sample_output = sample + Reverb_Do(Compressor_Do(Filters_Do(sample)));
   }
   Debug_Put(sample_output);
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
