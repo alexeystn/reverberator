@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "defines.h"
 #include "biquad.h"
 
 #define BIQUAD_Q 1.0f / sqrtf(2.0f)     /* quality factor - 2nd order butterworth*/
@@ -13,11 +14,13 @@
 #define cos_approx  cos
 
 
-void biquadFilterInit(biquadFilter_t *filter, float filterFreq, uint32_t refreshRate, float Q, biquadFilterType_e filterType)
+void biquadFilterInit(biquadFilter_t *filter, float filterFreq, biquadFilterType_e filterType)
 {
+    const uint32_t refreshRate = 1e6 / SAMPLING_FREQUENCY;
     const float omega = 2.0f * M_PIf * filterFreq * refreshRate * 0.000001f;
     const float sn = sin_approx(omega);
     const float cs = cos_approx(omega);
+    const float Q = 1.0f / sqrtf(2.0f);
     const float alpha = sn / (2.0f * Q);
 
     switch (filterType) {

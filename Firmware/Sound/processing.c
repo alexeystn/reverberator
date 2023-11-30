@@ -2,7 +2,7 @@
 #include "defines.h"
 #include "generator.h"
 #include "reverb.h"
-#include "filters.h"
+#include "biquad.h"
 #include "compressor.h"
 
 extern I2S_HandleTypeDef hi2s2;
@@ -23,6 +23,11 @@ int16_t peak_level = 0;
 
 float reverbDry = 0;
 float reverbWet = 0;
+
+
+reverb_t reverb;
+compressor_t compressor;
+biquadFilter_t filterHighCut, filterLowCut;
 
 
 void Set_Dry_Wet(uint8_t dry10, uint8_t wet10) {
@@ -56,19 +61,21 @@ int16_t Peak_Level_Get(void)
 }
 
 
+uint8_t Compressor_Get_Flag(void) {
+  __disable_irq();
+  uint8_t ret = compressor.flag;
+  __enable_irq();
+  compressor.flag = 0;
+  return ret;
+}
+
+
 void Processing_Start(void)
 {
-  Reverb_Init();
-  Compressor_Init();
-  Filters_Init();
-
-  if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == 0) {
-    test_enabled = 1;
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); // LED ON
-  } else {
-    test_enabled = 0;
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET); // LED OFF
-  }
+  reverbInit(&reverb);
+  compressorInit(&compressor);
+  biquadFilterInit(&filterHighCut, 3000, FILTER_LPF);
+  biquadFilterInit(&filterLowCut, 200, FILTER_HPF);
   HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)buffer_output, 4);
   HAL_I2S_Receive_DMA(&hi2s3, (uint16_t*)buffer_input, 4);
 }
@@ -90,20 +97,24 @@ static void Debug_Put(int16_t sample)
 }
 
 
-static void Buffer_Put(int16_t sample)
+static void Buffer_Put(int16_t input)
 {
-  static int32_t counter = 0;
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
-  Debug_Put(sample);
-  Peak_Level_Put(sample);
-  float fSample = Compressor_Do(sample);
 
-  if (test_enabled) {
-    sample_output = Reverb_Do(sample);
-  } else {
-    sample_output = fSample * reverbDry + Reverb_Do(fSample) * reverbWet;
-    //sample_output = sample + Reverb_Do(Compressor_Do(Filters_Do(sample)));
-  }
+  Debug_Put(input);
+  Peak_Level_Put(input);
+
+  float sample = input;
+  float sampleRev;
+
+
+  sample = biquadFilterApply(&filterLowCut, sample);
+  sample = compressorApply(&compressor, sample);
+
+  sampleRev = biquadFilterApply(&filterHighCut, sample);
+  sampleRev = reverbApply(&reverb, sampleRev);
+
+  sample_output = (sample * reverbDry + sampleRev * reverbWet);
 
   Debug_Put(sample_output);
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
