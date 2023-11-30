@@ -60,6 +60,7 @@ void Interface_Loop(void)
   uint32_t timestamp = HAL_GetTick();
 
   uint8_t newPeak = Logarithm(Peak_Level_Get()) / 4;
+  uint8_t comp = Compressor_Get_Flag();
   if (newPeak >= peak) {
     peak = newPeak;
     nextFadeTime = timestamp + 50;
@@ -90,12 +91,12 @@ void Interface_Loop(void)
   }
 
   LCD_SetCursor(0, 0);
-  char text[10];
+  char text[20];
   sprintf(text, "Dry%3d%% Wet%3d%%", dryLevel*10, wetLevel*10);
   LCD_Print(text);
   Set_Dry_Wet(dryLevel, wetLevel);
 
   LCD_SetCursor(1, 0);
-  LCD_Bar(peak+1);
+  LCD_Bar(peak+1, comp);
 
 }
