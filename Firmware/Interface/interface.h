@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-void Interface_Init(void);
-void Interface_Loop(void);
+void Interface_DefaultTask(void);
+void Interface_KeyboardTask(void);
 
 #endif

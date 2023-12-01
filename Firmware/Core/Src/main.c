@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -51,6 +52,11 @@ DMA_HandleTypeDef hdma_spi3_rx;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 
+osThreadId defaultTaskHandle;
+osThreadId keyboardTaskHandle;
+osMessageQId keysQueueHandle;
+uint8_t keysQueueBuffer[ 16 * sizeof( uint8_t ) ];
+osStaticMessageQDef_t keysQueueControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -64,6 +70,9 @@ static void MX_I2S3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_ADC1_Init(void);
+void runDefaultTask(void const * argument);
+void runKeyboardTask(void const * argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -111,17 +120,50 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
-  Interface_Init();
-  Processing_Start();
-
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* definition and creation of keysQueue */
+  osMessageQStaticDef(keysQueue, 16, uint8_t, keysQueueBuffer, &keysQueueControlBlock);
+  keysQueueHandle = osMessageCreate(osMessageQ(keysQueue), NULL);
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, runDefaultTask, osPriorityNormal, 0, 256);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of keyboardTask */
+  osThreadDef(keyboardTask, runKeyboardTask, osPriorityNormal, 0, 256);
+  keyboardTaskHandle = osThreadCreate(osThread(keyboardTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    Interface_Loop();
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -355,13 +397,13 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
   /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA2_Stream7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
 
 }
@@ -412,6 +454,57 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_runDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_runDefaultTask */
+void runDefaultTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  Interface_DefaultTask();
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_runKeyboardTask */
+/**
+* @brief Function implementing the keyboardTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_runKeyboardTask */
+void runKeyboardTask(void const * argument)
+{
+  /* USER CODE BEGIN runKeyboardTask */
+  /* Infinite loop */
+  Interface_KeyboardTask();
+  /* USER CODE END runKeyboardTask */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM10 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM10) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
