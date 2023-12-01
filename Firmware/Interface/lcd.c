@@ -91,7 +91,8 @@ void LCD_Print(char *text)
   }
 }
 
-void LCD_Bar(uint8_t value, uint8_t flag) {
+void LCD_Bar(uint8_t value, uint8_t flag)
+{
   if (value > 7)
     value = 7;
   if (flag)
@@ -109,6 +110,36 @@ void LCD_Bar(uint8_t value, uint8_t flag) {
   else
     iowrite(HD44780_IOdata, ' ');
 }
+
+
+void LCD_Slider(uint8_t value)
+{
+#if 0
+  for (int i = 0; i < value+1; i++)
+      iowrite(HD44780_IOdata, 0xFF);
+  for (int i = 0; i < 16-value; i++)
+      iowrite(HD44780_IOdata, '-');
+#else
+  for (int i = 0; i < value; i++)
+      iowrite(HD44780_IOdata, '=');
+  iowrite(HD44780_IOdata, 0xFF);
+  for (int i = 0; i < 16-value; i++)
+      iowrite(HD44780_IOdata, ' ');
+#endif
+
+}
+
+
+void LCD_Position(uint8_t value, uint8_t size)
+{
+  for (int i = 0; i < value; i++)
+      iowrite(HD44780_IOdata, '-');
+
+  iowrite(HD44780_IOdata, 'O');
+  for (int i = value+1; i < size; i++)
+      iowrite(HD44780_IOdata, '-');
+}
+
 
 void LCD_SetCursor(uint8_t row, uint8_t col)
 {

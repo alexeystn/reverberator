@@ -1,6 +1,8 @@
 #include "main.h"
 #include "defines.h"
 #include "processing.h"
+#include "interface.h"
+#include "parameters.h"
 #include "lcd.h"
 #include "cmsis_os.h"
 #include <stdio.h>
@@ -13,6 +15,12 @@ extern xQueueHandle keysQueueHandle;
 char text[20];
 uint8_t rx_key;
 
+uint8_t parameterValue[P_COUNT-1];
+uint8_t pagePointer = 0;
+uint8_t refreshScreen = 1;
+
+extern const char* parameterNames[P_COUNT];
+
 
 void Interface_DefaultTask(void)
 {
@@ -20,27 +28,65 @@ void Interface_DefaultTask(void)
 
   LCD_Init();
   Processing_Start();
+  for (int i = 0; i < P_COUNT-1; i++) {
+    parameterValue[i] = 7;
+  }
+
 
   while (1) {
-    LCD_SetCursor(0, 0);
+    rx_key = 0xFF;
+    //sprintf(text, "%3d %3d %3d", counter, rx_key);
     xQueueReceive(keysQueueHandle, &rx_key, 0);
-    sprintf(text, "%3d %3d %3d", counter, rx_key);
-    rx_key = 9;
-    LCD_Print(text);
-    osDelay(300);
+
+    if (rx_key != 0xFF) {
+      refreshScreen = 1;
+    }
+
+    if (rx_key == KEY_LEFT) {
+      if (pagePointer == 0)
+        pagePointer = P_COUNT-2;
+      else
+        pagePointer--;
+    }
+    if (rx_key == KEY_RIGHT) {
+      if (pagePointer == P_COUNT-2)
+        pagePointer = 0;
+      else
+        pagePointer++;
+    }
+    if (rx_key == KEY_MINUS) {
+      if (parameterValue[pagePointer] > 0)
+        parameterValue[pagePointer]--;
+    }
+    if (rx_key == KEY_PLUS) {
+      if (parameterValue[pagePointer] < 15)
+        parameterValue[pagePointer]++;
+    }
+
+    if (refreshScreen) {
+      LCD_SetCursor(0, 1);
+      LCD_Print(parameterNames[pagePointer]);
+      LCD_SetCursor(0, 9);
+      LCD_Position(pagePointer, P_COUNT-1);
+      LCD_Print("         ");
+      LCD_SetCursor(1, 0);
+      LCD_Slider(parameterValue[pagePointer]);
+
+      refreshScreen = 0;
+    }
+    osDelay(10);
     counter++;
   }
 }
 
 
 #define MAX_ADC 3100
-#define MAX_KEY 4
 
 void Interface_KeyboardTask(void)
 {
   uint16_t adcVal;
   uint8_t key;
-  uint8_t keyPrev = MAX_KEY;
+  uint8_t keyPrev = KEY_MAX;
   uint32_t lastKeyTime = 0;
   uint8_t keyChanged = 0;
 
@@ -52,6 +98,8 @@ void Interface_KeyboardTask(void)
     adcVal = HAL_ADC_GetValue(&hadc1);
 
     key = (adcVal + MAX_ADC/8) / (MAX_ADC / 4);
+    if (key & 1) key = KEY_MAX - key; // swap 3 and 1
+
 
     if (key != keyPrev) {
       keyChanged = 1;
@@ -62,7 +110,7 @@ void Interface_KeyboardTask(void)
     if (keyChanged == 1) {
       if (HAL_GetTick() - lastKeyTime > 5) {
         keyChanged = 0;
-        if (key != MAX_KEY) {
+        if (key != KEY_MAX) {
           xQueueSend(keysQueueHandle, &key, 0);
         }
       }
