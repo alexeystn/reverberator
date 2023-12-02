@@ -84,7 +84,7 @@ void LCD_Init(void)
   command(HD44780_RETURNHOME);
 }
 
-void LCD_Print(char *text)
+void LCD_Print(const char *text)
 {
   for (int i = 0; i < strlen(text); i++) {
     iowrite(HD44780_IOdata, text[i]);

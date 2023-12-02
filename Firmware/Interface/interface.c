@@ -18,6 +18,8 @@ uint8_t rx_key;
 uint8_t parameterValue[P_COUNT-1];
 uint8_t pagePointer = 0;
 uint8_t refreshScreen = 1;
+uint8_t statusMark = 0;
+uint32_t markResetTime = 0;
 
 extern const char* parameterNames[P_COUNT];
 
@@ -37,6 +39,26 @@ void Interface_DefaultTask(void)
     rx_key = 0xFF;
     //sprintf(text, "%3d %3d %3d", counter, rx_key);
     xQueueReceive(keysQueueHandle, &rx_key, 0);
+
+
+    if ((statusMark) && (HAL_GetTick() > markResetTime)) {
+      statusMark = 0;
+      refreshScreen = 1;
+    }
+
+    if (Processing_GetOverloadFlag()) {
+      statusMark = 1;
+      refreshScreen = 1;
+      markResetTime = HAL_GetTick() + 1000;
+    } else {
+      if (Processing_GetCompressorFlag()) {
+        statusMark = 2;
+        refreshScreen = 1;
+        markResetTime = HAL_GetTick() + 500;
+      }
+    }
+
+
 
     if (rx_key != 0xFF) {
       refreshScreen = 1;
@@ -64,6 +86,12 @@ void Interface_DefaultTask(void)
     }
 
     if (refreshScreen) {
+
+      LCD_SetCursor(0, 0);
+      if (statusMark == 0) LCD_Print(" "); else
+      if (statusMark == 1) LCD_Print("*"); else
+      if (statusMark == 2) LCD_Print(".");
+
       LCD_SetCursor(0, 1);
       LCD_Print(parameterNames[pagePointer]);
       LCD_SetCursor(0, 9);

@@ -11,8 +11,6 @@
 #define COMPRESSOR_THRESHOLD   5000
 #define COMPRESSOR_RATIO       3
 
-static uint8_t compressorFlag = 0;
-
 
 void compressorInit(compressor_t *compressor)
 {
