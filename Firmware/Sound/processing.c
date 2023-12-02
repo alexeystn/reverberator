@@ -2,14 +2,15 @@
 #include "defines.h"
 #include "generator.h"
 #include "reverb.h"
-#include "biquad.h"
+#include "filters.h"
 #include "compressor.h"
 #include "i2s_transfer.h"
 
 
 reverb_t reverb;
 compressor_t compressor;
-biquadFilter_t filterHighCut, filterLowCut;
+biquadFilter_t filterLowCut;
+pt1Filter_t filterHighCut;
 
 uint8_t flagCompressor = 0;
 uint8_t flagOverload = 0;
@@ -41,8 +42,8 @@ void Processing_Start(void)
 {
   reverbInit(&reverb);
   compressorInit(&compressor);
-  biquadFilterInit(&filterHighCut, 3000, FILTER_LPF);
-  biquadFilterInit(&filterLowCut, 200, FILTER_HPF);
+  pt1FilterInit(&filterHighCut, 300);
+  biquadFilterInit(&filterLowCut, 100, FILTER_HPF);
   flagCompressor = 0;
   flagOverload = 0;
   I2S_Transfer_Start();
@@ -64,8 +65,8 @@ int16_t Processing_Apply(int16_t input)
   sample = biquadFilterApply(&filterLowCut, sample);
   sample = compressorApply(&compressor, sample);
 
-  sampleRev = biquadFilterApply(&filterHighCut, sample);
+  sampleRev = pt1FilterApply(&filterHighCut, sample);
   sampleRev = reverbApply(&reverb, sampleRev);
 
-  return (sample + sampleRev);
+  return sampleRev; //(sample + sampleRev);
 }

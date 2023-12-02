@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "defines.h"
-#include "biquad.h"
+#include "filters.h"
 
 #define BIQUAD_Q 1.0f / sqrtf(2.0f)     /* quality factor - 2nd order butterworth*/
 
@@ -77,3 +77,25 @@ float biquadFilterApply(biquadFilter_t *filter, float input)
 
     return result;
 }
+
+
+float pt1FilterGain(float f_cut)
+{
+    float omega = 2.0f * M_PIf * f_cut / SAMPLING_FREQUENCY;
+    return omega / (omega + 1.0f);
+}
+
+
+void pt1FilterInit(pt1Filter_t *filter, float f_cut)
+{
+    filter->state = 0.0f;
+    filter->k = pt1FilterGain(f_cut);
+}
+
+
+float pt1FilterApply(pt1Filter_t *filter, float input)
+{
+    filter->state = filter->state + filter->k * (input - filter->state);
+    return filter->state;
+}
+
