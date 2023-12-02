@@ -16,7 +16,7 @@ char text[20];
 uint8_t rx_key;
 
 uint8_t parameterValue[P_COUNT-1];
-uint8_t pagePointer = 0;
+uint8_t pagePointer = P_REVERB_LEVEL;
 uint8_t refreshScreen = 1;
 uint8_t statusMark = 0;
 uint32_t markResetTime = 0;
@@ -77,12 +77,16 @@ void Interface_DefaultTask(void)
         pagePointer++;
     }
     if (rx_key == KEY_MINUS) {
-      if (parameterValue[pagePointer] > 0)
+      if (parameterValue[pagePointer] > 0) {
         parameterValue[pagePointer]--;
+        AdjustParameter(pagePointer, parameterValue[pagePointer]);
+      }
     }
     if (rx_key == KEY_PLUS) {
-      if (parameterValue[pagePointer] < 15)
+      if (parameterValue[pagePointer] < 15) {
         parameterValue[pagePointer]++;
+        AdjustParameter(pagePointer, parameterValue[pagePointer]);
+      }
     }
 
     if (refreshScreen) {

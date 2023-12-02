@@ -15,15 +15,4 @@ typedef enum {
 } parameter_t;
 
 
-const char* parameterNames[P_COUNT] = {
-    "Master  ",
-    "Reverb  ",
-    "Time    ",
-    "Tone    ",
-    "Thresh  ",
-    "Ratio   ",
-    "Save settings"
-};
-
-
 #endif
