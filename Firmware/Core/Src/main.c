@@ -427,7 +427,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, P1_Pin|P2_Pin|P3_Pin|DEBUG_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, P1_Pin|P2_Pin|P3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
@@ -442,8 +442,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : P1_Pin P2_Pin P3_Pin DEBUG_Pin */
-  GPIO_InitStruct.Pin = P1_Pin|P2_Pin|P3_Pin|DEBUG_Pin;
+  /*Configure GPIO pins : P1_Pin P2_Pin P3_Pin */
+  GPIO_InitStruct.Pin = P1_Pin|P2_Pin|P3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

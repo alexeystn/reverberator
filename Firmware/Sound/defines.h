@@ -8,4 +8,8 @@
 //#define USE_INPUT_UNBALANCED
 #define USE_INPUT_SUMM
 
+//#define ENABLE_DEBUG_PIN  // else - DEBUG UART
+#define DEBUG_Pin        GPIO_PIN_6
+#define DEBUG_GPIO_Port  GPIOB
+
 #endif

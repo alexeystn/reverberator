@@ -115,6 +115,7 @@ int16_t Processing_Apply(int16_t input)
 
   sampleRev = pt1FilterApply(&filterHighCut, sample);
   sampleRev = reverbApply(&reverb, sampleRev);
+  //HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 
   return sample * masterLevel + sampleRev * reverbLevel;
 }
