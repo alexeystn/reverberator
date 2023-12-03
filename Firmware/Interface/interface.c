@@ -21,6 +21,15 @@ uint8_t refreshScreen = 1;
 uint8_t statusMark = 0;
 uint32_t markResetTime = 0;
 
+
+#define SCREEN_MODE_MENU  0
+#define SCREEN_MODE_BARS  1
+
+
+uint32_t lastKeyPressTime = 0;
+uint8_t screenMode = SCREEN_MODE_BARS;
+uint8_t keyPressFlag = 0;
+
 extern const char* parameterNames[P_COUNT];
 
 
@@ -37,73 +46,74 @@ void Interface_DefaultTask(void)
 
   while (1) {
     rx_key = 0xFF;
-    //sprintf(text, "%3d %3d %3d", counter, rx_key);
     xQueueReceive(keysQueueHandle, &rx_key, 0);
-
-
-    if ((statusMark) && (HAL_GetTick() > markResetTime)) {
-      statusMark = 0;
-      refreshScreen = 1;
-    }
-
-    if (Processing_GetOverloadFlag()) {
-      statusMark = 1;
-      refreshScreen = 1;
-      markResetTime = HAL_GetTick() + 1000;
-    } else {
-      if (Processing_GetCompressorFlag()) {
-        statusMark = 2;
-        refreshScreen = 1;
-        markResetTime = HAL_GetTick() + 500;
-      }
-    }
-
-
 
     if (rx_key != 0xFF) {
       refreshScreen = 1;
+      keyPressFlag = 1;
+      lastKeyPressTime = HAL_GetTick();
     }
 
-    if (rx_key == KEY_LEFT) {
-      if (pagePointer == 0)
-        pagePointer = P_COUNT-2;
-      else
-        pagePointer--;
-    }
-    if (rx_key == KEY_RIGHT) {
-      if (pagePointer == P_COUNT-2)
-        pagePointer = 0;
-      else
-        pagePointer++;
-    }
-    if (rx_key == KEY_MINUS) {
-      if (parameterValue[pagePointer] > 0) {
-        parameterValue[pagePointer]--;
-        AdjustParameter(pagePointer, parameterValue[pagePointer]);
+    if (screenMode == SCREEN_MODE_MENU) {
+      if (rx_key == KEY_LEFT) {
+        if (pagePointer == 0)
+          pagePointer = P_COUNT-2;
+        else
+          pagePointer--;
       }
+      if (rx_key == KEY_RIGHT) {
+        if (pagePointer == P_COUNT-2)
+          pagePointer = 0;
+        else
+          pagePointer++;
+      }
+      if (rx_key == KEY_MINUS) {
+        if (parameterValue[pagePointer] > 0) {
+          parameterValue[pagePointer]--;
+          AdjustParameter(pagePointer, parameterValue[pagePointer]);
+        }
+      }
+      if (rx_key == KEY_PLUS) {
+        if (parameterValue[pagePointer] < 15) {
+          parameterValue[pagePointer]++;
+          AdjustParameter(pagePointer, parameterValue[pagePointer]);
+        }
+      }
+      keyPressFlag = 0;
     }
-    if (rx_key == KEY_PLUS) {
-      if (parameterValue[pagePointer] < 15) {
-        parameterValue[pagePointer]++;
-        AdjustParameter(pagePointer, parameterValue[pagePointer]);
+
+    if (screenMode == SCREEN_MODE_BARS) {
+      if (keyPressFlag) {
+        screenMode = SCREEN_MODE_MENU;
+        refreshScreen = 1;
+        keyPressFlag = 0;
+      }
+    } else {  // SCREEN_MODE_MENU
+      if ((HAL_GetTick() - lastKeyPressTime) > 2000) {
+        screenMode = SCREEN_MODE_BARS;
+        refreshScreen = 1;
       }
     }
 
     if (refreshScreen) {
-
-      LCD_SetCursor(0, 0);
-      if (statusMark == 0) LCD_Print(" "); else
-      if (statusMark == 1) LCD_Print("*"); else
-      if (statusMark == 2) LCD_Print(".");
-
-      LCD_SetCursor(0, 1);
-      LCD_Print(parameterNames[pagePointer]);
-      LCD_SetCursor(0, 9);
-      LCD_Position(pagePointer, P_COUNT-1);
-      LCD_Print("         ");
-      LCD_SetCursor(1, 0);
-      LCD_Slider(parameterValue[pagePointer]);
-
+      if (screenMode == SCREEN_MODE_BARS) {
+        LCD_SetCursor(0, 0);
+        LCD_Print("i                ");
+        LCD_SetCursor(1, 0);
+        LCD_Print("o                ");
+      } else {  // SCREEN_MODE_MENU
+        LCD_SetCursor(0, 0);
+        if (statusMark == 0) LCD_Print(" "); else
+        if (statusMark == 1) LCD_Print("*"); else
+        if (statusMark == 2) LCD_Print(".");
+        LCD_SetCursor(0, 1);
+        LCD_Print(parameterNames[pagePointer]);
+        LCD_SetCursor(0, 9);
+        LCD_Position(pagePointer, P_COUNT-1);
+        LCD_Print("         ");
+        LCD_SetCursor(1, 0);
+        LCD_Slider(parameterValue[pagePointer]);
+      }
       refreshScreen = 0;
     }
     osDelay(10);
