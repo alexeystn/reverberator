@@ -91,23 +91,15 @@ void LCD_Print(const char *text)
   }
 }
 
-void LCD_Bar(uint8_t value, uint8_t flag)
+void LCD_Bar(uint8_t value) //, uint8_t flag)
 {
-  if (value > 7)
-    value = 7;
-  if (flag)
-    iowrite(HD44780_IOdata, '>');
-  else
-    iowrite(HD44780_IOdata, ' ');
-  for (int i = 1; i < (8-value); i++)
-    iowrite(HD44780_IOdata, ' ');
-  for (int i = 0; i < value*2; i++)
+  if (value > 14)
+    value = 14;
+
+  for (int i = 0; i < value; i++)
     iowrite(HD44780_IOdata, 0xFF);
-  for (int i = 0; i < (8-value-1); i++)
-    iowrite(HD44780_IOdata, ' ');
-  if (flag)
-    iowrite(HD44780_IOdata, '<');
-  else
+
+  for (int i = 0; i < (14-value); i++)
     iowrite(HD44780_IOdata, ' ');
 }
 

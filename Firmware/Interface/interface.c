@@ -18,9 +18,10 @@ uint8_t rx_key;
 uint8_t parameterValue[P_COUNT-1];
 uint8_t pagePointer = P_REVERB_LEVEL;
 uint8_t refreshScreen = 1;
-uint8_t statusMark = 0;
-uint32_t markResetTime = 0;
-
+uint8_t statusMark[3] = {0, 0, 0};
+uint32_t markResetTime[3] = {0, 0, 0};
+uint8_t peaks[2] = {0, 0};
+uint32_t decayTime[2] = {0, 0};
 
 #define SCREEN_MODE_MENU  0
 #define SCREEN_MODE_BARS  1
@@ -31,6 +32,70 @@ uint8_t screenMode = SCREEN_MODE_BARS;
 uint8_t keyPressFlag = 0;
 
 extern const char* parameterNames[P_COUNT];
+
+
+uint8_t Logarithm(uint16_t val)
+{
+  uint8_t i;
+  uint32_t x = 2;
+  for (i = 0; i < 15; i++) {
+    if (x > val) {
+      break;
+    }
+    x *= 2;
+  }
+  return i;
+}
+
+
+
+uint8_t Update_Bars(void)
+{
+  uint8_t ret;
+  uint16_t peakValues[2];
+  uint8_t peakPoints[2];
+  uint32_t time = HAL_GetTick();
+
+  Processing_GetPeaks(&peakValues[0], &peakValues[1]);
+
+  for (int i = 0; i < 2; i++) {
+    if (peakValues[i] > 30000) {
+      statusMark[i] = 1;
+      ret = 1;
+      markResetTime[i] = HAL_GetTick() + 1000;
+    }
+
+    peakPoints[i] = Logarithm(peakValues[i]);
+
+    if (peakPoints[i] > peaks[i]) {
+      peaks[i] = peakPoints[i];
+      decayTime[i] = time + 50;
+      ret = 1;
+    }
+    if (time > decayTime[i]) {
+      if (peaks[i] > 0) {
+        peaks[i]--;
+        ret = 1;
+      }
+      decayTime[i] = time + 50;
+    }
+  }
+
+  if (Processing_GetCompressorFlag()) {
+    statusMark[2] = 1;
+    ret = 1;
+    markResetTime[2] = HAL_GetTick() + 1000;
+  }
+
+  for (int i = 0; i < 3; i++) {
+    if ((statusMark[i]) && (HAL_GetTick() > markResetTime[i])) {
+      statusMark[i] = 0;
+    }
+  }
+
+
+  return ret;
+}
 
 
 void Interface_DefaultTask(void)
@@ -95,17 +160,37 @@ void Interface_DefaultTask(void)
       }
     }
 
+    if (Update_Bars()) {
+      refreshScreen = 1;
+    }
+
+
     if (refreshScreen) {
       if (screenMode == SCREEN_MODE_BARS) {
         LCD_SetCursor(0, 0);
-        LCD_Print("i                ");
+        LCD_Print("i");
+        LCD_Bar(peaks[0]);
         LCD_SetCursor(1, 0);
-        LCD_Print("o                ");
+        LCD_Print("o");
+        LCD_Bar(peaks[1]);
+
+        LCD_SetCursor(0, 15);
+        if (statusMark[0]) {
+          LCD_Print("*");
+        } else if (statusMark[2]) {
+          LCD_Print("C");
+        } else {
+          LCD_Print(" ");
+        }
+        LCD_SetCursor(1, 15);
+        if (statusMark[1]) {
+          LCD_Print("*");
+        } else {
+          LCD_Print(" ");
+        }
+
       } else {  // SCREEN_MODE_MENU
         LCD_SetCursor(0, 0);
-        if (statusMark == 0) LCD_Print(" "); else
-        if (statusMark == 1) LCD_Print("*"); else
-        if (statusMark == 2) LCD_Print(".");
         LCD_SetCursor(0, 1);
         LCD_Print(parameterNames[pagePointer]);
         LCD_SetCursor(0, 9);

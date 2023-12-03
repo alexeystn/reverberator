@@ -63,6 +63,31 @@ pt1Filter_t filterHighCut;
 uint8_t flagCompressor = 0;
 uint8_t flagOverload = 0;
 
+uint16_t peakLevelInput = 0;
+uint16_t peakLevelOutput = 0;
+
+
+void Processing_PutPeak(uint16_t *current, int16_t new)
+{
+  if (new > *current) {
+    *current = new;
+  }
+  if (-new > *current) {
+    *current = -new;
+  }
+}
+
+
+void Processing_GetPeaks(uint16_t *inPeak, uint16_t *outPeak)
+{
+  __disable_irq();
+  *inPeak = peakLevelInput;
+  peakLevelInput = 0;
+  *outPeak = peakLevelOutput;
+  peakLevelOutput = 0;
+  __enable_irq();
+}
+
 
 uint8_t Processing_GetCompressorFlag(void)
 {
@@ -109,15 +134,19 @@ int16_t Processing_Apply(int16_t input)
   if (compressor.state != C_IDLE) {
     flagCompressor = 1;
   }
+  Processing_PutPeak(&peakLevelInput, (int16_t)sample);
 
   sample = biquadFilterApply(&filterLowCut, sample);
   sample = compressorApply(&compressor, sample);
 
   sampleRev = pt1FilterApply(&filterHighCut, sample);
   sampleRev = reverbApply(&reverb, sampleRev);
-  //HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
 
-  return sample * masterLevel + sampleRev * reverbLevel;
+  sample = sample * masterLevel + sampleRev * reverbLevel;
+
+  Processing_PutPeak(&peakLevelOutput, (int16_t)sample);
+
+  return sample;
 }
 
 
