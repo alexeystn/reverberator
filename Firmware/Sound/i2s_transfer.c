@@ -66,13 +66,29 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
+#ifdef USE_INPUT_UNBALANCED
   Buffer_Put(buffer_input[0]); // Right IN
+#endif
+#ifdef USE_INPUT_BALANCED
+  Buffer_Put(buffer_input[1]); // Left IN
+#endif
+#ifdef USE_INPUT_SUMM
+  Buffer_Put(buffer_input[0] + buffer_input[1]); // Both
+#endif
 }
 
 
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
+#ifdef USE_INPUT_UNBALANCED
   Buffer_Put(buffer_input[2]); // Right IN
+#endif
+#ifdef USE_INPUT_BALANCED
+  Buffer_Put(buffer_input[3]); // Left IN
+#endif
+#ifdef USE_INPUT_SUMM
+  Buffer_Put(buffer_input[2] + buffer_input[3]); // Both
+#endif
 }
 
 
