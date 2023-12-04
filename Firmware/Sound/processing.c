@@ -140,6 +140,7 @@ int16_t Processing_Apply(int16_t input)
   sample = compressorApply(&compressor, sample);
 
   sampleRev = pt1FilterApply(&filterHighCut, sample);
+  sampleRev = pt1FilterApply(&filterHighCut, sampleRev);
   sampleRev = reverbApply(&reverb, sampleRev);
 
   sample = sample * masterLevel + sampleRev * reverbLevel;
@@ -166,7 +167,7 @@ void AdjustParameter(uint8_t param, uint8_t value)
     }
     break;
   case P_REVERB_TONE:
-    pt1FilterGain(tableCutoffFreq[value]);
+    filterHighCut.k = pt1FilterGain(tableCutoffFreq[value]);
     break;
 
   case P_COMPRESSOR_THRESHOLD:
