@@ -119,6 +119,10 @@ void Interface_DefaultTask(void)
     osDelay(1000);
   }
 
+  for (int i = 0; i < P_COUNT - 1; i++) {
+    AdjustParameter(i, parameterValue[i]);
+  }
+
   while (1) {
     rx_key = 0xFF;
     xQueueReceive(keysQueueHandle, &rx_key, 0);
