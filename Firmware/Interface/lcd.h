@@ -5,6 +5,7 @@
 
 void LCD_Init(void);
 void LCD_Print(const char *text);
+void LCD_Char(char ch);
 void LCD_SetCursor(uint8_t row, uint8_t column);
 void LCD_Bar(uint8_t value);
 void LCD_Slider(uint8_t value);

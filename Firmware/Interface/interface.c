@@ -102,27 +102,22 @@ uint8_t Update_Bars(void)
 void Interface_DefaultTask(void)
 {
   uint32_t counter = 0;
-  uint8_t success = 0;
 
   LCD_Init();
   Processing_Start();
 
-
   LCD_SetCursor(0, 0);
-  if (Storage_Load()) {
-    LCD_Print("Settings loaded");
-  } else {
-    LCD_Print("Load failed");
-    LCD_SetCursor(1, 0);
-    LCD_Print("Loading defaults");
-  }
+  LCD_Print("Voice Processor ");
   osDelay(1000);
 
-
-//  for (int i = 0; i < P_COUNT-1; i++) {
-//    parameterValue[i] = 7;
-//  }
-
+  if (!Storage_Load()) {
+    LCD_SetCursor(1, 0);
+    LCD_Print("  Load failed   ");
+    osDelay(1000);
+    LCD_SetCursor(1, 0);
+    LCD_Print("   Resetting    ");
+    osDelay(1000);
+  }
 
   while (1) {
     rx_key = 0xFF;
@@ -160,12 +155,11 @@ void Interface_DefaultTask(void)
         }
       }
       if (((rx_key == KEY_MINUS) || (rx_key == KEY_PLUS)) && (pagePointer == P_SAVE_SETTINS)) {
-        LCD_SetCursor(1, 0);
         Storage_Save();
-        LCD_Print("Saved");
+        LCD_SetCursor(0, 14);
+        LCD_Print("OK");
         osDelay(1000);
       }
-
 
       keyPressFlag = 0;
     }
@@ -177,7 +171,7 @@ void Interface_DefaultTask(void)
         keyPressFlag = 0;
       }
     } else {  // SCREEN_MODE_MENU
-      if ((HAL_GetTick() - lastKeyPressTime) > 2000) {
+      if ((HAL_GetTick() - lastKeyPressTime) > 3000) {
         screenMode = SCREEN_MODE_BARS;
         refreshScreen = 1;
       }
@@ -186,7 +180,6 @@ void Interface_DefaultTask(void)
     if (Update_Bars()) {
       refreshScreen = 1;
     }
-
 
     if (refreshScreen) {
       if (screenMode == SCREEN_MODE_BARS) {
@@ -214,14 +207,19 @@ void Interface_DefaultTask(void)
 
       } else {  // SCREEN_MODE_MENU
         LCD_SetCursor(0, 0);
-        LCD_Print(" ");
-        LCD_SetCursor(0, 1);
         LCD_Print(parameterNames[pagePointer]);
-        LCD_SetCursor(0, 9);
-        LCD_Position(pagePointer, P_COUNT);
-        LCD_Print("         ");
+        LCD_SetCursor(0, 15);
+        if ((pagePointer == P_COMPRESSOR_RATIO) || (pagePointer == P_COMPRESSOR_THRESHOLD)) {
+          if (statusMark[2]) {
+            LCD_Print("C");
+          }
+        }
         LCD_SetCursor(1, 0);
-        LCD_Slider(parameterValue[pagePointer]);
+        if (pagePointer != P_SAVE_SETTINS) {
+          LCD_Slider(parameterValue[pagePointer]);
+        } else {
+          LCD_Print("                ");
+        }
       }
       refreshScreen = 0;
     }

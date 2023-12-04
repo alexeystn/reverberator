@@ -91,6 +91,11 @@ void LCD_Print(const char *text)
   }
 }
 
+void LCD_Char(char ch)
+{
+  iowrite(HD44780_IOdata, ch);
+}
+
 void LCD_Bar(uint8_t value) //, uint8_t flag)
 {
   if (value > 14)
@@ -113,10 +118,10 @@ void LCD_Slider(uint8_t value)
       iowrite(HD44780_IOdata, '-');
 #else
   for (int i = 0; i < value; i++)
-      iowrite(HD44780_IOdata, '=');
-  iowrite(HD44780_IOdata, 0xFF);
+      iowrite(HD44780_IOdata, '-');
+  iowrite(HD44780_IOdata, 'O');
   for (int i = 0; i < 16-value; i++)
-      iowrite(HD44780_IOdata, ' ');
+      iowrite(HD44780_IOdata, '-');
 #endif
 
 }
