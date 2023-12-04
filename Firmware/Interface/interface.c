@@ -215,7 +215,10 @@ void Interface_KeyboardTask(void)
   uint8_t key;
   uint8_t keyPrev = KEY_MAX;
   uint32_t lastKeyTime = 0;
+  uint32_t lastEventTime = 0;
   uint8_t keyChanged = 0;
+  uint32_t time;
+  uint32_t nextRepeatTime = 0;
 
   while (1) {
 
@@ -227,21 +230,34 @@ void Interface_KeyboardTask(void)
     key = (adcVal + MAX_ADC/8) / (MAX_ADC / 4);
     if (key & 1) key = KEY_MAX - key; // swap 3 and 1
 
+    time = HAL_GetTick();
 
     if (key != keyPrev) {
-      keyChanged = 1;
-      lastKeyTime = HAL_GetTick();
+      if (key != KEY_MAX) {
+        keyChanged = 1;
+        lastKeyTime = time;
+        nextRepeatTime = time + 500;
+      }
     }
-    keyPrev = key;
+
+    if ((key == keyPrev) && (key != KEY_MAX)) {
+      if (time > nextRepeatTime) {
+        nextRepeatTime += 100;
+        xQueueSend(keysQueueHandle, &key, 0);
+      }
+    }
 
     if (keyChanged == 1) {
-      if (HAL_GetTick() - lastKeyTime > 5) {
+      if ((time - lastKeyTime > 5) && (time - lastEventTime > 50)) {
         keyChanged = 0;
         if (key != KEY_MAX) {
           xQueueSend(keysQueueHandle, &key, 0);
+          lastEventTime = time;
         }
       }
     }
+
+    keyPrev = key;
     osDelay(1);
 
   }
