@@ -13,5 +13,5 @@ const char* parameterNames[P_COUNT] = {
     "Tone    ",
     "Thresh  ",
     "Ratio   ",
-    "Save settings"
+    "Save    "
 };

@@ -4,6 +4,7 @@
 #include "interface.h"
 #include "parameters.h"
 #include "lcd.h"
+#include "storage.h"
 #include "cmsis_os.h"
 #include <stdio.h>
 
@@ -15,7 +16,7 @@ extern xQueueHandle keysQueueHandle;
 char text[20];
 uint8_t rx_key;
 
-uint8_t parameterValue[P_COUNT-1];
+uint8_t parameterValue[P_COUNT];
 uint8_t pagePointer = P_REVERB_LEVEL;
 uint8_t refreshScreen = 1;
 uint8_t statusMark[3] = {0, 0, 0};
@@ -101,12 +102,26 @@ uint8_t Update_Bars(void)
 void Interface_DefaultTask(void)
 {
   uint32_t counter = 0;
+  uint8_t success = 0;
 
   LCD_Init();
   Processing_Start();
-  for (int i = 0; i < P_COUNT-1; i++) {
-    parameterValue[i] = 7;
+
+
+  LCD_SetCursor(0, 0);
+  if (Storage_Load()) {
+    LCD_Print("Settings loaded");
+  } else {
+    LCD_Print("Load failed");
+    LCD_SetCursor(1, 0);
+    LCD_Print("Loading defaults");
   }
+  osDelay(1000);
+
+
+//  for (int i = 0; i < P_COUNT-1; i++) {
+//    parameterValue[i] = 7;
+//  }
 
 
   while (1) {
@@ -122,12 +137,12 @@ void Interface_DefaultTask(void)
     if (screenMode == SCREEN_MODE_MENU) {
       if (rx_key == KEY_LEFT) {
         if (pagePointer == 0)
-          pagePointer = P_COUNT-2;
+          pagePointer = P_COUNT-1;
         else
           pagePointer--;
       }
       if (rx_key == KEY_RIGHT) {
-        if (pagePointer == P_COUNT-2)
+        if (pagePointer == P_COUNT-1)
           pagePointer = 0;
         else
           pagePointer++;
@@ -144,6 +159,14 @@ void Interface_DefaultTask(void)
           AdjustParameter(pagePointer, parameterValue[pagePointer]);
         }
       }
+      if (((rx_key == KEY_MINUS) || (rx_key == KEY_PLUS)) && (pagePointer == P_SAVE_SETTINS)) {
+        LCD_SetCursor(1, 0);
+        Storage_Save();
+        LCD_Print("Saved");
+        osDelay(1000);
+      }
+
+
       keyPressFlag = 0;
     }
 
@@ -191,10 +214,11 @@ void Interface_DefaultTask(void)
 
       } else {  // SCREEN_MODE_MENU
         LCD_SetCursor(0, 0);
+        LCD_Print(" ");
         LCD_SetCursor(0, 1);
         LCD_Print(parameterNames[pagePointer]);
         LCD_SetCursor(0, 9);
-        LCD_Position(pagePointer, P_COUNT-1);
+        LCD_Position(pagePointer, P_COUNT);
         LCD_Print("         ");
         LCD_SetCursor(1, 0);
         LCD_Slider(parameterValue[pagePointer]);
@@ -242,13 +266,13 @@ void Interface_KeyboardTask(void)
 
     if ((key == keyPrev) && (key != KEY_MAX)) {
       if (time > nextRepeatTime) {
-        nextRepeatTime += 100;
+        nextRepeatTime = time + 100;
         xQueueSend(keysQueueHandle, &key, 0);
       }
     }
 
     if (keyChanged == 1) {
-      if ((time - lastKeyTime > 5) && (time - lastEventTime > 50)) {
+      if ((time - lastKeyTime > 5) && (time - lastEventTime > 100)) {
         keyChanged = 0;
         if (key != KEY_MAX) {
           xQueueSend(keysQueueHandle, &key, 0);
