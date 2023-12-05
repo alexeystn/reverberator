@@ -6,8 +6,7 @@
 #include <math.h>
 
 
-//static void Filter_Init(filter_t *filter, filter_type_t type, float gain, float delay_ms);
-//static float Filter_Process(filter_t *filter, float sample);
+// Schroeder reverberator algorithm
 
 
 static void Filter_Init(filter_t *filter, filter_type_t type, float gain, float delay_ms)

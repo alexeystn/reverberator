@@ -31,63 +31,63 @@ void compressorInit(compressor_t *compressor)
 }
 
 
-float compressorApply(compressor_t *compressor, float input)
+float compressorApply(compressor_t *c, float input)
 {
-  if (fabs(input) > compressor->threshold) {
-    if (compressor->gain >=  compressor->gain_reduce) {
-      if (compressor->state == C_IDLE) {
-        compressor->state = C_ATTACK;
-        compressor->timeout = compressor->attack;
+  if (fabs(input) > c->threshold) {
+    if (c->gain >=  c->gain_reduce) {
+      if (c->state == C_IDLE) {
+        c->state = C_ATTACK;
+        c->timeout = c->attack;
       } else {
-        if (compressor->state == C_RELEASE) {
-          compressor->state = C_ATTACK;
-          compressor->timeout = compressor->attack;
+        if (c->state == C_RELEASE) {
+          c->state = C_ATTACK;
+          c->timeout = c->attack;
         }
       }
     }
-    if (compressor->state == C_GAIN_REDUCE) {
-      compressor->timeout = compressor->hold;
+    if (c->state == C_GAIN_REDUCE) {
+      c->timeout = c->hold;
     }
   }
 
-  if ((fabs(input) < compressor->threshold) && (compressor->gain <= 1.0f)) {
-    if ((compressor->timeout == 0) && (compressor->state == C_GAIN_REDUCE)) {
-      compressor->state = C_RELEASE;
-      compressor->timeout = compressor->release;
+  if ((fabs(input) < c->threshold) && (c->gain <= 1.0f)) {
+    if ((c->timeout == 0) && (c->state == C_GAIN_REDUCE)) {
+      c->state = C_RELEASE;
+      c->timeout = c->release;
     }
   }
 
-  switch (compressor->state) {
+  switch (c->state) {
     case C_ATTACK:
-      if ((compressor->timeout > 0) && (compressor->gain > compressor->gain_reduce)) {
-        compressor->gain -= compressor->gain_step_attack;
-        compressor->timeout--;
+      if ((c->timeout > 0) && (c->gain > c->gain_reduce)) {
+        c->gain -= c->gain_step_attack;
+        c->timeout--;
       } else {
-        compressor->state = C_GAIN_REDUCE;
-        compressor->timeout = compressor->hold;
+        c->state = C_GAIN_REDUCE;
+        c->timeout = c->hold;
       }
       break;
     case C_GAIN_REDUCE:
-      if (compressor->timeout > 0) {
-        compressor->timeout--;
+      if (c->timeout > 0) {
+        c->timeout--;
       } else {
-        compressor->state = C_RELEASE;
-        compressor->timeout = compressor->release;
+        c->state = C_RELEASE;
+        c->timeout = c->release;
       }
       break;
 
     case C_RELEASE:
-      if (compressor->timeout>0 && compressor->gain<1.0f) {
-        compressor->timeout--;
-        compressor->gain += compressor->gain_step_release;
+      if ((c->timeout > 0) && (c->gain < 1.0f)) {
+        c->timeout--;
+        c->gain += c->gain_step_release;
       } else {
-        compressor->state=C_IDLE;
+        c->state=C_IDLE;
       }
       break;
 
     case C_IDLE:
-      if (compressor->gain < 1.0f) {
-        compressor->gain = 1.0f;
+      if (c->gain < 1.0f) {
+        c->gain = 1.0f;
       }
       break;
 
@@ -95,10 +95,10 @@ float compressorApply(compressor_t *compressor, float input)
       break;
 
   }
-  if (compressor->state != C_IDLE) {
-    compressor->flag = 1;
+  if (c->state != C_IDLE) {
+    c->flag = 1;
   }
 
-  return input * compressor->gain;
+  return input * c->gain;
 }
 

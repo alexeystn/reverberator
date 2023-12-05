@@ -4,9 +4,7 @@
 #define SAMPLING_FREQUENCY        48828
 #define DEBUG_BUFFER_SIZE         64
 
-//#define USE_INPUT_BALANCED
-//#define USE_INPUT_UNBALANCED
-#define USE_INPUT_SUMM
+#define DEBUG_CHANNEL 1
 
 //#define ENABLE_DEBUG_PIN  // else - DEBUG UART
 #define DEBUG_Pin        GPIO_PIN_6
