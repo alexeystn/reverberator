@@ -54,11 +54,15 @@ static void Debug_Put(int16_t sample)
 }
 
 
-static void Buffer_Put(int16_t input)
+static void Buffer_Put(int16_t input1, int16_t input2)
 {
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_SET);
-  Debug_Put(input | 0x0001);
-  sample_output = Processing_Apply(input);
+#if DEBUG_CHANNEL == 1
+  Debug_Put(input1 | 0x0001);
+#else
+  Debug_Put(input2 | 0x0001);
+#endif
+  sample_output = Processing_Apply(input1, input2);;
   Debug_Put(sample_output & ~0x0001);
   HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, GPIO_PIN_RESET);
 }
@@ -80,29 +84,13 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-#ifdef USE_INPUT_UNBALANCED
-  Buffer_Put(buffer_input[0]); // Right IN
-#endif
-#ifdef USE_INPUT_BALANCED
-  Buffer_Put(buffer_input[1]); // Left IN
-#endif
-#ifdef USE_INPUT_SUMM
-  Buffer_Put(buffer_input[0] + buffer_input[1]); // Both
-#endif
+  Buffer_Put(buffer_input[0], buffer_input[1]);
 }
 
 
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-#ifdef USE_INPUT_UNBALANCED
-  Buffer_Put(buffer_input[2]); // Right IN
-#endif
-#ifdef USE_INPUT_BALANCED
-  Buffer_Put(buffer_input[3]); // Left IN
-#endif
-#ifdef USE_INPUT_SUMM
-  Buffer_Put(buffer_input[2] + buffer_input[3]); // Both
-#endif
+  Buffer_Put(buffer_input[2], buffer_input[3]);
 }
 
 

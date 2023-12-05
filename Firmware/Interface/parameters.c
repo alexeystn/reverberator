@@ -7,7 +7,9 @@
 #include <stdio.h>
 
 const char* parameterNames[P_COUNT] = {
-    "Master Level    ",
+    "Input 1 level   ",
+    "Input 2 level   ",
+    "Dry signal level",
     "Reverb Level    ",
     "Reverb Time     ",
     "Reverb Tone     ",

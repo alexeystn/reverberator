@@ -1,6 +1,5 @@
 #include "main.h"
 #include "defines.h"
-#include "generator.h"
 #include "reverb.h"
 #include "filters.h"
 #include "compressor.h"
@@ -51,7 +50,9 @@ float tableRatios[16] = {
 };
 
 
-float masterLevel = 1.0f;
+float inputLevel1 = 1.0f;
+float inputLevel2 = 1.0f;
+float dryLevel = 1.0f;
 float reverbLevel = 0.0f;
 
 
@@ -123,12 +124,15 @@ void Processing_Start(void)
 }
 
 
-int16_t Processing_Apply(int16_t input)
+int16_t Processing_Apply(int16_t input1, int16_t input2)
 {
-  float sample = input;
+  float sample = ((float)input1)*inputLevel1 + ((float)input2)*inputLevel2;
   float sampleRev;
 
-  if ((input > 30000) || (input < -30000)) {
+  if ((input1 > 30000) || (input1 < -30000)) {
+    flagOverload = 1;
+  }
+  if ((input2 > 30000) || (input2 < -30000)) {
     flagOverload = 1;
   }
   if (compressor.state != C_IDLE) {
@@ -143,7 +147,7 @@ int16_t Processing_Apply(int16_t input)
   sampleRev = pt1FilterApply(&filterHighCut, sampleRev);
   sampleRev = reverbApply(&reverb, sampleRev);
 
-  sample = sample * masterLevel + sampleRev * reverbLevel;
+  sample = sample * dryLevel + sampleRev * reverbLevel;
 
   Processing_PutPeak(&peakLevelOutput, (int16_t)sample);
 
@@ -155,8 +159,14 @@ void AdjustParameter(uint8_t param, uint8_t value)
 {
   __disable_irq();
   switch (param) {
-  case P_MASTER_LEVEL:
-    masterLevel = tableLevels[value];
+  case P_INPUT_LEVEL_1:
+    inputLevel1 = tableLevels[value];
+    break;
+  case P_INPUT_LEVEL_2:
+    inputLevel2 = tableLevels[value];
+    break;
+  case P_DRY_SIGNAL_LEVEL:
+    dryLevel = tableLevels[value];
     break;
   case P_REVERB_LEVEL:
     reverbLevel = tableLevels[value];

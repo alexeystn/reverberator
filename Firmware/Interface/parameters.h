@@ -4,7 +4,9 @@
 #include "main.h"
 
 typedef enum {
-  P_MASTER_LEVEL,
+  P_INPUT_LEVEL_1,
+  P_INPUT_LEVEL_2,
+  P_DRY_SIGNAL_LEVEL,
   P_REVERB_LEVEL,
   P_REVERB_TIME,
   P_REVERB_TONE,
