@@ -12,21 +12,21 @@ enum comp_state_t {
 
 
 typedef struct compressor_s {
-  enum comp_state_t state;
-  int32_t attack;
-  int32_t release;
-  int32_t hold;
+  int32_t attack_smps;
+  int32_t release_smps;
+  int32_t hold_smps;
   int32_t timeout;
-  float gain_reduce;
   float gain_step_attack;
   float gain_step_release;
-  float gain;
+  float gain_current;
+  float envelope;
+  float ratio;
   float threshold;
-  uint8_t flag;
+  uint8_t state;
 } compressor_t;
 
 
-void compressorInit(compressor_t *compressor);
+void compressorInit(compressor_t *compressor, float threshold, float ratio);
 float compressorApply(compressor_t *compressor, float input);
 
 #endif

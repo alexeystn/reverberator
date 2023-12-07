@@ -43,10 +43,10 @@ float tableThresholds[16] = {
 };
 
 float tableRatios[16] = {
-    1.000, 0.905, 0.817, 0.738, 0.665, 0.598, 0.538, 0.483,
-    0.434, 0.389, 0.349, 0.312, 0.280, 0.250, 0.224, 0.200
-    //1.000, 1.105, 1.223, 1.356, 1.505, 1.672, 1.859, 2.069,
-    //2.305, 2.571, 2.868, 3.202, 3.577, 3.998, 4.470, 5.000
+    //1.000, 0.905, 0.817, 0.738, 0.665, 0.598, 0.538, 0.483,
+    //0.434, 0.389, 0.349, 0.312, 0.280, 0.250, 0.224, 0.200
+    1.000, 1.105, 1.223, 1.356, 1.505, 1.672, 1.859, 2.069,
+    2.305, 2.571, 2.868, 3.202, 3.577, 3.998, 4.470, 5.000
 };
 
 
@@ -115,7 +115,7 @@ uint8_t Processing_GetOverloadFlag(void)
 void Processing_Start(void)
 {
   reverbInit(&reverb);
-  compressorInit(&compressor);
+  compressorInit(&compressor, 5000, 3);
   pt1FilterInit(&filterHighCut, 300);
   biquadFilterInit(&filterLowCut, 80, FILTER_HPF);
   flagCompressor = 0;
@@ -185,7 +185,7 @@ void AdjustParameter(uint8_t param, uint8_t value)
     break;
 
   case P_COMPRESSOR_RATIO:
-    compressor.gain_reduce = tableRatios[value];
+    compressor.ratio = tableRatios[value];
     break;
   }
   __enable_irq();

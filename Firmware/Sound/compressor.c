@@ -3,102 +3,74 @@
 #include "compressor.h"
 #include <math.h>
 
-// https://github.com/YetAnotherElectronicsChannel/STM32_DSP_COMPRESSOR/
-
 #define COMPRESSOR_ATTACK_MS   30
 #define COMPRESSOR_RELEASE_MS  20
 #define COMPRESSOR_HOLD_MS     10
-#define COMPRESSOR_THRESHOLD   5000
-#define COMPRESSOR_RATIO       3
 
 
-void compressorInit(compressor_t *compressor)
+void compressorInit(compressor_t *c, float threshold, float ratio)
 {
-  compressor->state = C_IDLE;
-  compressor->attack = COMPRESSOR_ATTACK_MS * SAMPLING_FREQUENCY / 1000.0f;
-  compressor->release = COMPRESSOR_RELEASE_MS * SAMPLING_FREQUENCY / 1000.0f;
-  compressor->hold = COMPRESSOR_HOLD_MS * SAMPLING_FREQUENCY / 1000.0f;
-
-  compressor->threshold = COMPRESSOR_THRESHOLD;
-  compressor->gain_reduce = 1.0f / COMPRESSOR_RATIO;
-
-  compressor->gain_step_attack = (1.0f - compressor->gain_reduce) / compressor->attack;
-  compressor->gain_step_release = (1.0f - compressor->gain_reduce) / compressor->release;
-
-  //initial gain = 1.0 -> no compression
-  compressor->gain = 1.0f;
-  compressor->flag = 0;
+  c->state = 0;
+  c->attack_smps = COMPRESSOR_ATTACK_MS * SAMPLING_FREQUENCY / 1000.0f;
+  c->release_smps = COMPRESSOR_RELEASE_MS * SAMPLING_FREQUENCY / 1000.0f;
+  c->hold_smps = COMPRESSOR_HOLD_MS * SAMPLING_FREQUENCY / 1000.0f;
+  c->threshold = threshold;
+  c->gain_step_attack = (1.0f - 1.0f / ratio) / c->attack_smps;
+  c->gain_step_release = (1.0f - 1.0f / ratio) / c->release_smps;
+  c->gain_current = 1.0f; //initial - no compression
+  c->envelope = c->threshold;
+  c->state = 0;
 }
 
 
 float compressorApply(compressor_t *c, float input)
 {
-  if (fabs(input) > c->threshold) {
-    if (c->gain >=  c->gain_reduce) {
-      if (c->state == C_IDLE) {
-        c->state = C_ATTACK;
-        c->timeout = c->attack;
-      } else {
-        if (c->state == C_RELEASE) {
-          c->state = C_ATTACK;
-          c->timeout = c->attack;
-        }
+  float input_abs = fabs(input);
+  uint8_t need_to_recalc = 0;
+  if (input_abs > c->threshold) {
+    c->state = 1;
+    c->timeout = c->hold_smps;
+    if (input_abs >= c->envelope) {
+      c->envelope = input_abs;
+      need_to_recalc = 1;
+    }
+  } else {
+    if (c->timeout) {
+      c->timeout--;
+      if (c->timeout == 0) {
+        c->envelope = c->threshold;
+        c->state = 0;
+        need_to_recalc = 0;
       }
-    }
-    if (c->state == C_GAIN_REDUCE) {
-      c->timeout = c->hold;
-    }
-  }
-
-  if ((fabs(input) < c->threshold) && (c->gain <= 1.0f)) {
-    if ((c->timeout == 0) && (c->state == C_GAIN_REDUCE)) {
-      c->state = C_RELEASE;
-      c->timeout = c->release;
     }
   }
 
-  switch (c->state) {
-    case C_ATTACK:
-      if ((c->timeout > 0) && (c->gain > c->gain_reduce)) {
-        c->gain -= c->gain_step_attack;
-        c->timeout--;
-      } else {
-        c->state = C_GAIN_REDUCE;
-        c->timeout = c->hold;
-      }
-      break;
-    case C_GAIN_REDUCE:
-      if (c->timeout > 0) {
-        c->timeout--;
-      } else {
-        c->state = C_RELEASE;
-        c->timeout = c->release;
-      }
-      break;
-
-    case C_RELEASE:
-      if ((c->timeout > 0) && (c->gain < 1.0f)) {
-        c->timeout--;
-        c->gain += c->gain_step_release;
-      } else {
-        c->state=C_IDLE;
-      }
-      break;
-
-    case C_IDLE:
-      if (c->gain < 1.0f) {
-        c->gain = 1.0f;
-      }
-      break;
-
-    default:
-      break;
-
-  }
-  if (c->state != C_IDLE) {
-    c->flag = 1;
+  float target_gain = 1;
+  if (c->state) {
+    float desired_level = c->threshold + (c->envelope - c->threshold) / c->ratio;
+    target_gain = desired_level / c->envelope;
   }
 
-  return input * c->gain;
+  if (need_to_recalc) {
+    c->gain_step_attack = (1.0f - target_gain) / c->attack_smps;
+    c->gain_step_release = (1.0f - target_gain) / c->release_smps;
+    need_to_recalc = 0;
+  }
+
+  if (c->state) {
+    if (c->gain_current > target_gain) {
+      c->gain_current -= c->gain_step_attack;
+    } else {
+      c->gain_current = target_gain;
+    }
+  } else {
+    if (c->gain_current < 1) {
+      c->gain_current += c->gain_step_release;
+    } else {
+      c->gain_current = 1;
+    }
+  }
+
+  return (input * c->gain_current);
 }
 
