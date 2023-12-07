@@ -13,10 +13,11 @@ for port in available_ports:
 port_name = '/dev/cu.usbserial-A50285BI' # FT232
 port_name = '/dev/cu.usbserial-0001' # SP2102
 port_name = '/dev/cu.usbserial-FT2TLUOA0' # FTDI
+port_name = '/dev/cu.usbserial-FTYZOWYP0'
 
-capture_time = 15  # seconds
+capture_time = 5  # seconds
 
-filename = datetime.now().strftime('%Y%m%d_%H%M%S.bin')
+filename = 'Capture/' + datetime.now().strftime('%Y%m%d_%H%M%S.bin')
 
 with open(filename, 'wb') as f:
     with serial.Serial(port_name, baudrate=3000000, timeout=1) as ser:
@@ -34,16 +35,29 @@ with open(filename, 'wb') as f:
 
 print(total_bytes, 'bytes captured')
     
-d = np.fromfile(filename, dtype='int16')
+d = np.fromfile(filename, dtype='uint8')
 
-d = d.reshape((-1,2)) * 32
 
-for i in range(2):
+for i in range(4):
+    m = d[i::4].min()
+    print(m)
+    if m == 1:
+        start = i
+    
+n = (len(d) - 16) // 4
+
+d = d[start:start+n*4]
+
+signal_in = (d[0::4] + d[1::4]*256).astype('int16')
+signal_out = (d[2::4] + d[3::4]*256).astype('int16')
+
+for i, sig in enumerate([signal_in, signal_out]):
     
     wav_wile = wave.open(filename.split('.')[0] + '_' + str(i) + '.wav', 'w')
     wav_wile.setparams((1, 2, 48000, 0, 'NONE', 'not compressed'))
-    wav_wile.writeframes(d[:,i].tobytes())  # w[i::2]
+    wav_wile.writeframes(sig.tobytes())  # w[i::2]
     wav_wile.close()    
 
-plt.plot(d)
+plt.plot(signal_in)
+plt.plot(signal_out)
 plt.show()
