@@ -1,4 +1,6 @@
+#ifdef USE_HAL_DRIVER
 #include "main.h"
+#endif
 #include "defines.h"
 #include "compressor.h"
 #include <math.h>
@@ -19,6 +21,7 @@ void compressorInit(compressor_t *c, float threshold, float ratio)
   c->gain_step_release = (1.0f - 1.0f / ratio) / c->release_smps;
   c->gain_current = 1.0f; //initial - no compression
   c->envelope = c->threshold;
+  c->ratio = ratio;
   c->state = 0;
 }
 

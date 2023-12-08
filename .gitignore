@@ -6,3 +6,5 @@ Firmware/.settings
 *.so
 *.png
 Tools/Capture
+Tools/*.txt
+cmp
