@@ -147,6 +147,8 @@ int16_t Processing_Apply(int16_t input1, int16_t input2)
 
   sample = sample * dryLevel + sampleRev * reverbLevel;
 
+  flagOverload = limiterApply(&sample);
+
   Processing_PutPeak(&peakLevelOutput, (int16_t)sample);
 
   return sample;

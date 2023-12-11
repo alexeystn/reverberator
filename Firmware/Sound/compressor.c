@@ -77,3 +77,15 @@ float compressorApply(compressor_t *c, float input)
   return (input * c->gain_current);
 }
 
+
+uint8_t limiterApply(float *sample)
+{
+  uint8_t ret = 0;
+  if (*sample >= OVERLOAD_LIMIT) {
+    *sample = OVERLOAD_LIMIT - 1;
+  }
+  if (*sample <= -OVERLOAD_LIMIT) {
+    *sample = -OVERLOAD_LIMIT + 1;
+  }
+  return ret;
+}

@@ -29,4 +29,6 @@ typedef struct compressor_s {
 void compressorInit(compressor_t *compressor, float threshold_dB, float ratio);
 float compressorApply(compressor_t *compressor, float input);
 
+uint8_t limiterApply(float *sample);
+
 #endif
