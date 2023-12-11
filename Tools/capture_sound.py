@@ -60,4 +60,5 @@ for i, sig in enumerate([signal_in, signal_out]):
 
 plt.plot(signal_in)
 plt.plot(signal_out)
+plt.grid(True)
 plt.show()
