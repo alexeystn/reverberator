@@ -42,11 +42,6 @@ float tableCutoffFreq[16] = {
     3617,  4671,  5999,  7672,  9781, 12437, 15784, 20000
 };
 
-float tableThresholds[16] = {
-    20000, 17416, 15113, 13062, 11235,  9607,  8156,  6864,
-     5713,  4687,  3774,  2960,  2234,  1588,  1013,   500
-};
-
 float tableRatios[16] = {
     1.0, 1.4, 1.8, 2.2, 2.6, 3.0, 3.4, 3.8,
     4.2, 4.6, 5.0, 5.4, 5.8, 6.2, 6.6, 7.0
@@ -184,7 +179,7 @@ void AdjustParameter(uint8_t param, uint8_t value)
     break;
 
   case P_COMPRESSOR_THRESHOLD:
-    compressor.threshold = tableThresholds[value];
+    compressor.threshold = OVERLOAD_LIMIT / 2 * tableLevels[value];
     break;
 
   case P_COMPRESSOR_RATIO:

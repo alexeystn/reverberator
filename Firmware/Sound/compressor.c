@@ -10,13 +10,13 @@
 #define COMPRESSOR_HOLD_MS     10
 
 
-void compressorInit(compressor_t *c, float threshold, float ratio)
+void compressorInit(compressor_t *c, float threshold_dB, float ratio)
 {
   c->state = 0;
   c->attack_smps = COMPRESSOR_ATTACK_MS * SAMPLING_FREQUENCY / 1000.0f;
   c->release_smps = COMPRESSOR_RELEASE_MS * SAMPLING_FREQUENCY / 1000.0f;
   c->hold_smps = COMPRESSOR_HOLD_MS * SAMPLING_FREQUENCY / 1000.0f;
-  c->threshold = threshold;
+  c->threshold = (OVERLOAD_LIMIT / 2) * threshold_dB;
   c->gain_step_attack = (1.0f - 1.0f / ratio) / c->attack_smps;
   c->gain_step_release = (1.0f - 1.0f / ratio) / c->release_smps;
   c->gain_current = 1.0f; //initial - no compression

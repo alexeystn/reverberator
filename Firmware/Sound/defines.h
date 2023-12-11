@@ -2,6 +2,7 @@
 #define DEFINES_H
 
 #define SAMPLING_FREQUENCY        48828
+#define OVERLOAD_LIMIT            30000
 #define DEBUG_BUFFER_SIZE         64
 
 #define DEBUG_CHANNEL 2

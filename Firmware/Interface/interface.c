@@ -61,7 +61,7 @@ uint8_t Update_Bars(void)
   Processing_GetPeaks(&peakValues[0], &peakValues[1]);
 
   for (int i = 0; i < 2; i++) {
-    if (peakValues[i] > 30000) {
+    if (peakValues[i] > OVERLOAD_LIMIT) {
       statusMark[i] = 1;
       ret = 1;
       markResetTime[i] = HAL_GetTick() + 1000;
