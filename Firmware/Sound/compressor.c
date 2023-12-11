@@ -16,13 +16,21 @@ void compressorInit(compressor_t *c, float threshold_dB, float ratio)
   c->attack_smps = COMPRESSOR_ATTACK_MS * SAMPLING_FREQUENCY / 1000.0f;
   c->release_smps = COMPRESSOR_RELEASE_MS * SAMPLING_FREQUENCY / 1000.0f;
   c->hold_smps = COMPRESSOR_HOLD_MS * SAMPLING_FREQUENCY / 1000.0f;
-  c->threshold = (OVERLOAD_LIMIT / 2) * threshold_dB;
   c->gain_step_attack = (1.0f - 1.0f / ratio) / c->attack_smps;
   c->gain_step_release = (1.0f - 1.0f / ratio) / c->release_smps;
   c->gain_current = 1.0f; //initial - no compression
   c->envelope = c->threshold;
-  c->ratio = ratio;
   c->state = 0;
+  compressorUpdate(c, threshold_dB, ratio);
+}
+
+void compressorUpdate(compressor_t *c, float threshold_dB, float ratio)
+{
+  c->ratio = ratio;
+  c->threshold = (OVERLOAD_LIMIT / 2) * threshold_dB;
+  //float maxCompressorOutput;
+  //maxCompressorOutput = c->threshold + (OVERLOAD_LIMIT - c->threshold) / ratio;
+  //c->restore_gain = OVERLOAD_LIMIT / maxCompressorOutput;
 }
 
 
@@ -74,6 +82,7 @@ float compressorApply(compressor_t *c, float input)
     }
   }
 
+  //return (input * c->gain_current * c->restore_gain);
   return (input * c->gain_current);
 }
 

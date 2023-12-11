@@ -22,12 +22,14 @@ typedef struct compressor_s {
   float envelope;
   float ratio;
   float threshold;
+  float restore_gain;
   uint8_t state;
 } compressor_t;
 
 
 void compressorInit(compressor_t *compressor, float threshold_dB, float ratio);
 float compressorApply(compressor_t *compressor, float input);
+void compressorUpdate(compressor_t *compressor, float threshold_dB, float ratio);
 
 uint8_t limiterApply(float *sample);
 

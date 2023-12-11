@@ -179,13 +179,9 @@ void AdjustParameter(uint8_t param, uint8_t value)
   case P_REVERB_TONE:
     filterHighCut.k = pt1FilterGain(tableCutoffFreq[value]);
     break;
-
   case P_COMPRESSOR_THRESHOLD:
-    compressor.threshold = OVERLOAD_LIMIT / 2 * tableLevels[value];
-    break;
-
   case P_COMPRESSOR_RATIO:
-    compressor.ratio = tableRatios[value];
+    compressorUpdate(&compressor, tableLevels[value], tableRatios[value]);
     break;
   }
   __enable_irq();
