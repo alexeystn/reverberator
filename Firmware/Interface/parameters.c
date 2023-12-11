@@ -7,13 +7,13 @@
 #include <stdio.h>
 
 const char* parameterNames[P_COUNT] = {
-    "Input 1     ",
-    "Input 2     ",
-    "Dry signal  ",
-    "Reverb      ",
+    "Input 1   ",
+    "Input 2   ",
+    "Dry       ",
+    "Reverb    ",
     "Reverb Time     ",
     "Reverb Tone     ",
-    "Threshold   ",
-    "Ratio           ",
+    "Threshold ",
+    "Ratio     ",
     "Save settings   "
 };

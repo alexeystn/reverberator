@@ -34,7 +34,7 @@ uint8_t keyPressFlag = 0;
 
 extern const char* parameterNames[P_COUNT];
 extern char *tableLabels[];
-
+extern float tableRatios[];
 
 uint8_t Logarithm(uint16_t val)
 {
@@ -226,7 +226,14 @@ void Interface_DefaultTask(void)
             LCD_Print("  ");
           }
         }
-
+        if (pagePointer == P_COMPRESSOR_RATIO) {
+          int v = tableRatios[parameterValue[pagePointer]] * 10 + 0.01f;
+          LCD_SetCursor(0, 10);
+          LCD_Print("   ");
+          LCD_Char('0' + v / 10);
+          LCD_Char('.');
+          LCD_Char('0' + v % 10);
+        }
         LCD_SetCursor(0, 9);
         if ((pagePointer == P_COMPRESSOR_RATIO) || (pagePointer == P_COMPRESSOR_THRESHOLD)) {
           if (statusMark[2]) {

@@ -19,3 +19,9 @@ mult_dB = ['{0:.4f}'.format(i) for i in y_dB]
 print('Log multipliers:')
 print('{', ', '.join(mult_dB), '}')
 
+
+ratio = 1 + np.arange(16) / 2.5
+text_ratio = ['{0:.1f}'.format(i) for i in ratio]
+
+print('Ratio:')
+print('{', ', '.join(text_ratio), '}')
