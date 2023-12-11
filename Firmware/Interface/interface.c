@@ -33,6 +33,7 @@ uint8_t screenMode = SCREEN_MODE_BARS;
 uint8_t keyPressFlag = 0;
 
 extern const char* parameterNames[P_COUNT];
+extern char *tableLabels[];
 
 
 uint8_t Logarithm(uint16_t val)
@@ -212,10 +213,24 @@ void Interface_DefaultTask(void)
       } else {  // SCREEN_MODE_MENU
         LCD_SetCursor(0, 0);
         LCD_Print(parameterNames[pagePointer]);
-        LCD_SetCursor(0, 15);
+        if ((((pagePointer == P_INPUT_LEVEL_1) ||
+              (pagePointer == P_INPUT_LEVEL_2)) ||
+             ((pagePointer == P_DRY_SIGNAL_LEVEL) ||
+              (pagePointer == P_REVERB_LEVEL))) ||
+              (pagePointer == P_COMPRESSOR_THRESHOLD)) {
+          LCD_SetCursor(0, 10);
+          LCD_Print(tableLabels[parameterValue[pagePointer]]);
+          if (parameterValue[pagePointer] != 0) {
+            LCD_Print("dB");
+          } else {
+            LCD_Print("  ");
+          }
+        }
+
+        LCD_SetCursor(0, 9);
         if ((pagePointer == P_COMPRESSOR_RATIO) || (pagePointer == P_COMPRESSOR_THRESHOLD)) {
           if (statusMark[2]) {
-            LCD_Print("C");
+            LCD_Print("*");
           }
         }
         LCD_SetCursor(1, 0);
