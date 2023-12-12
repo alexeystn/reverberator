@@ -19,9 +19,11 @@ void compressorInit(compressor_t *c, float threshold_dB, float ratio)
   c->gain_step_attack = (1.0f - 1.0f / ratio) / c->attack_smps;
   c->gain_step_release = (1.0f - 1.0f / ratio) / c->release_smps;
   c->gain_current = 1.0f; //initial - no compression
-  c->envelope = c->threshold;
   c->state = 0;
-  compressorUpdate(c, threshold_dB, ratio);
+  c->threshold = (OVERLOAD_LIMIT / 2) * threshold_dB;
+  c->envelope = c->threshold;
+  c->ratio = ratio;
+  c->restore_gain = 1;
 }
 
 void compressorUpdate(compressor_t *c, float threshold_dB, float ratio)

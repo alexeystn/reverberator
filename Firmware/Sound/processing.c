@@ -125,7 +125,7 @@ void Processing_Start(void)
 int16_t Processing_Apply(int16_t input1, int16_t input2)
 {
   float sample = ((float)input1)*inputLevel1 + ((float)input2)*inputLevel2;
-  float sampleRev;
+  float sampleRev = 0;
 
   if ((input1 > 30000) || (input1 < -30000)) {
     flagOverload = 1;
@@ -180,8 +180,10 @@ void AdjustParameter(uint8_t param, uint8_t value)
     filterHighCut.k = pt1FilterGain(tableCutoffFreq[value]);
     break;
   case P_COMPRESSOR_THRESHOLD:
+    compressor.threshold = (OVERLOAD_LIMIT / 2) * tableLevels[value];
+    break;
   case P_COMPRESSOR_RATIO:
-    compressorUpdate(&compressor, tableLevels[value], tableRatios[value]);
+    compressor.ratio = tableRatios[value];
     break;
   }
   __enable_irq();
