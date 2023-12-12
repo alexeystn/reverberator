@@ -19,6 +19,7 @@ typedef struct compressor_s {
   float gain_step_attack;
   float gain_step_release;
   float gain_current;
+  float gain_target;
   float envelope;
   float ratio;
   float threshold;

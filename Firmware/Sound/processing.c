@@ -113,7 +113,7 @@ uint8_t Processing_GetOverloadFlag(void)
 void Processing_Start(void)
 {
   reverbInit(&reverb);
-  compressorInit(&compressor, 5000, 3);
+  compressorInit(&compressor, 1.0, 3);
   pt1FilterInit(&filterHighCut, 300);
   biquadFilterInit(&filterLowCut, 80, FILTER_HPF);
   flagCompressor = 0;

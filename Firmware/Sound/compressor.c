@@ -39,13 +39,15 @@ void compressorUpdate(compressor_t *c, float threshold_dB, float ratio)
 float compressorApply(compressor_t *c, float input)
 {
   float input_abs = fabs(input);
-  uint8_t need_to_recalc = 0;
+  uint8_t need_to_recalc_attack = 0;
+  uint8_t need_to_recalc_release = 0;
+
   if (input_abs > c->threshold) {
     c->state = 1;
     c->timeout = c->hold_smps;
     if (input_abs >= c->envelope) {
       c->envelope = input_abs;
-      need_to_recalc = 1;
+      need_to_recalc_attack = 1;
     }
   } else {
     if (c->timeout) {
@@ -53,28 +55,33 @@ float compressorApply(compressor_t *c, float input)
       if (c->timeout == 0) {
         c->envelope = c->threshold;
         c->state = 0;
-        need_to_recalc = 0;
+        need_to_recalc_release = 1;
       }
     }
   }
 
-  float target_gain = 1;
+  c->gain_target = 1;
   if (c->state) {
     float desired_level = c->threshold + (c->envelope - c->threshold) / c->ratio;
-    target_gain = desired_level / c->envelope;
+    c->gain_target = desired_level / c->envelope;
   }
 
-  if (need_to_recalc) {
-    c->gain_step_attack = (1.0f - target_gain) / c->attack_smps;
-    c->gain_step_release = (1.0f - target_gain) / c->release_smps;
-    need_to_recalc = 0;
+  if (need_to_recalc_attack) {
+    c->gain_step_attack = (1.0f - c->gain_target) / c->attack_smps;
+    need_to_recalc_attack = 0;
   }
+  if (need_to_recalc_release) {
+    c->gain_step_release = (1.0f - c->gain_current) / c->release_smps;
+    need_to_recalc_release = 0;
+  }
+
 
   if (c->state) {
-    if (c->gain_current > target_gain) {
+    if (c->gain_current > c->gain_target) {
       c->gain_current -= c->gain_step_attack;
-    } else {
-      c->gain_current = target_gain;
+      if (c->gain_current < c->gain_target) {
+        c->gain_current = c->gain_target;
+      }
     }
   } else {
     if (c->gain_current < 1) {
