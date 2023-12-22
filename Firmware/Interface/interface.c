@@ -19,8 +19,8 @@ uint8_t rx_key;
 uint8_t parameterValue[P_COUNT];
 uint8_t pagePointer = P_REVERB_LEVEL;
 uint8_t refreshScreen = 1;
-uint8_t statusMark[3] = {0, 0, 0};
-uint32_t markResetTime[3] = {0, 0, 0};
+uint8_t statusMark[MARK_COUNT] = {0, 0, 0};
+uint32_t markResetTime[MARK_COUNT] = {0, 0, 0};
 uint8_t peaks[2] = {0, 0};
 uint32_t decayTime[2] = {0, 0};
 
@@ -84,12 +84,12 @@ uint8_t Update_Bars(void)
   }
 
   if (Processing_GetCompressorFlag()) {
-    statusMark[2] = 1;
+    statusMark[MARK_COMPRESSOR] = 1;
     ret = 1;
-    markResetTime[2] = HAL_GetTick() + 1000;
+    markResetTime[MARK_COMPRESSOR] = HAL_GetTick() + 1000;
   }
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < MARK_COUNT; i++) {
     if ((statusMark[i]) && (HAL_GetTick() > markResetTime[i])) {
       statusMark[i] = 0;
     }
@@ -196,15 +196,15 @@ void Interface_DefaultTask(void)
         LCD_Bar(peaks[1]);
 
         LCD_SetCursor(0, 15);
-        if (statusMark[0]) {
+        if (statusMark[MARK_OVERLOAD_IN]) {
           LCD_Print("*");
-        } else if (statusMark[2]) {
+        } else if (statusMark[MARK_COMPRESSOR]) {
           LCD_Print("C");
         } else {
           LCD_Print(" ");
         }
         LCD_SetCursor(1, 15);
-        if (statusMark[1]) {
+        if (statusMark[MARK_OVERLOAD_OUT]) {
           LCD_Print("*");
         } else {
           LCD_Print(" ");
@@ -236,8 +236,8 @@ void Interface_DefaultTask(void)
         }
         LCD_SetCursor(0, 9);
         if ((pagePointer == P_COMPRESSOR_RATIO) || (pagePointer == P_COMPRESSOR_THRESHOLD)) {
-          if (statusMark[2]) {
-            LCD_Print("*");
+          if (statusMark[MARK_COMPRESSOR]) {
+            LCD_Print("C");
           }
         }
         LCD_SetCursor(1, 0);

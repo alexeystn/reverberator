@@ -12,6 +12,14 @@ typedef enum {
 } keys_t;
 
 
+typedef enum {
+  MARK_OVERLOAD_IN = 0,
+  MARK_OVERLOAD_OUT,
+  MARK_COMPRESSOR,
+  MARK_COUNT
+} mark_t;
+
+
 void Interface_DefaultTask(void);
 void Interface_KeyboardTask(void);
 

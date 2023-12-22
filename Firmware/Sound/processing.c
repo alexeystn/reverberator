@@ -60,7 +60,6 @@ biquadFilter_t filterLowCut;
 pt1Filter_t filterHighCut;
 
 uint8_t flagCompressor = 0;
-uint8_t flagOverload = 0;
 
 uint16_t peakLevelInput = 0;
 uint16_t peakLevelOutput = 0;
@@ -99,17 +98,6 @@ uint8_t Processing_GetCompressorFlag(void)
 }
 
 
-uint8_t Processing_GetOverloadFlag(void)
-{
-  uint8_t ret;
-  __disable_irq();
-  ret = flagOverload;
-  flagOverload = 0;
-  __enable_irq();
-  return ret;
-}
-
-
 void Processing_Start(void)
 {
   reverbInit(&reverb);
@@ -117,7 +105,6 @@ void Processing_Start(void)
   pt1FilterInit(&filterHighCut, 300);
   biquadFilterInit(&filterLowCut, 80, FILTER_HPF);
   flagCompressor = 0;
-  flagOverload = 0;
   I2S_Transfer_Start();
 }
 
@@ -127,16 +114,12 @@ int16_t Processing_Apply(int16_t input1, int16_t input2)
   float sample = ((float)input1)*inputLevel1 + ((float)input2)*inputLevel2;
   float sampleRev = 0;
 
-  if ((input1 > 30000) || (input1 < -30000)) {
-    flagOverload = 1;
-  }
-  if ((input2 > 30000) || (input2 < -30000)) {
-    flagOverload = 1;
-  }
+  Processing_PutPeak(&peakLevelInput, (int16_t)input1);
+  Processing_PutPeak(&peakLevelInput, (int16_t)input2);
+
   if (compressor.state != C_IDLE) {
     flagCompressor = 1;
   }
-  Processing_PutPeak(&peakLevelInput, (int16_t)sample);
 
   sample = biquadFilterApply(&filterLowCut, sample);
   sample = compressorApply(&compressor, sample);
@@ -147,9 +130,8 @@ int16_t Processing_Apply(int16_t input1, int16_t input2)
 
   sample = sample * dryLevel + sampleRev * reverbLevel;
 
-  flagOverload = limiterApply(&sample);
-
   Processing_PutPeak(&peakLevelOutput, (int16_t)sample);
+  limiterApply(&sample);
 
   return sample;
 }
