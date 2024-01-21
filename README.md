@@ -10,5 +10,12 @@
 | B12 (WS)  |     | LCK |
 | B13 (CK)  |     | BCK |
 | B15 (SD)  |     | DIN |
-| GND       |     | FMY-MD1-MD0 | 
-|  | 5V Analog <br> 3.3V Digital | 3.3V Analog <br> 1.8V/3.3V Digital |
+| GND | FMY-MD1-MD0 |   | 
+
+Power distribution diagram
+|Input  |Converter|Consumer| 
+| :---: |  :---:  |  :---: |
+| 9V |     -    |   Mic pre-amp  |
+|    | LDO 5.0V | MCU -> 3.3V ADC digital <br> Display | 
+|    | LDO 5.0V | ADC analog | 
+|    | LDO 3.3V | DAC | 
