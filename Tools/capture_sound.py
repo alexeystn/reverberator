@@ -48,6 +48,7 @@ else:  # capture new file
     
 d = np.fromfile(filename, dtype='uint8')
 
+start = 0
 
 for i in range(4):
     m = d[i::4].min()
