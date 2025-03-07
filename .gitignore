@@ -8,3 +8,4 @@ Firmware/.settings
 Tools/Capture
 Tools/*.txt
 cmp
+*.launch
